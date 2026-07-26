@@ -1,0 +1,328 @@
+import jwt from 'jsonwebtoken';
+import Teacher from '../models/teacher.model.js';
+import Availability from '../models/availability.model.js';
+import Booking from '../models/booking.model.js';
+// Student model import for future query integration
+import Student from '../models/student.model.js';
+
+class TeacherService {
+  /**
+   * Register a new teacher
+   */
+  async registerTeacher(teacherData) {
+    const { email } = teacherData;
+
+    const existingTeacher = await Teacher.findOne({ email });
+    if (existingTeacher) {
+      const error = new Error('Email is already registered');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const teacher = await Teacher.create(teacherData);
+    const teacherObj = teacher.toObject();
+    delete teacherObj.password;
+
+    return teacherObj;
+  }
+
+  /**
+   * Authenticate teacher and issue JWT token
+   */
+  async loginTeacher(email, password) {
+    if (!email || !password) {
+      const error = new Error('Please provide email and password');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const teacher = await Teacher.findOne({ email }).select('+password');
+    if (!teacher) {
+      const error = new Error('Invalid email or password');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const isMatch = await teacher.comparePassword(password);
+    if (!isMatch) {
+      const error = new Error('Invalid email or password');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    if (!teacher.active) {
+      const error = new Error('Account is deactivated. Please contact administration');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    if (teacher.status !== 'Verified') {
+      const error = new Error(`Account status is ${teacher.status}. Only verified accounts can log in`);
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const token = jwt.sign(
+      { id: teacher._id, role: 'teacher' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const teacherObj = teacher.toObject();
+    delete teacherObj.password;
+
+    return { teacher: teacherObj, token };
+  }
+
+  /**
+   * Fetch teacher profile by ID
+   */
+  async getTeacherProfile(teacherId) {
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) {
+      const error = new Error('Teacher profile not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    return teacher;
+  }
+
+  /**
+   * Update editable fields of teacher profile
+   */
+  async updateTeacherProfile(teacherId, updateData) {
+    const { phone, qualification, teachingExperience, teachingMode, profilePhoto, password } = updateData;
+
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) {
+      const error = new Error('Teacher profile not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (phone !== undefined) teacher.phone = phone;
+    if (qualification !== undefined) teacher.qualification = qualification;
+    if (teachingExperience !== undefined) teacher.teachingExperience = teachingExperience;
+    if (teachingMode !== undefined) teacher.teachingMode = teachingMode;
+    if (profilePhoto !== undefined) teacher.profilePhoto = profilePhoto;
+    if (password) teacher.password = password; // Triggers pre-save password hash hook
+
+    await teacher.save();
+
+    const teacherObj = teacher.toObject();
+    delete teacherObj.password;
+
+    return teacherObj;
+  }
+
+  /**
+   * Fetch assigned students for the teacher
+   */
+  async getAssignedStudents(teacherId) {
+    const bookings = await Booking.find({ teacherId, status: 'Approved' }).distinct('studentId');
+    const students = await Student.find({ _id: { $in: bookings } }).select('-password');
+    return students;
+  }
+
+  /**
+   * Get Teacher Dashboard Data
+   */
+  async getDashboard(teacherId) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Day string e.g., 'Monday'
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayDay = days[today.getDay()];
+
+    const [todaysBookings, upcomingClasses, availability, assignedStudents, allBookings] = await Promise.all([
+      Booking.find({
+        teacherId,
+        date: { $gte: today, $lt: tomorrow },
+        status: 'Approved'
+      }).populate('studentId', 'name email phone'),
+
+      Booking.find({
+        teacherId,
+        date: { $gte: tomorrow },
+        status: 'Approved'
+      }).sort({ date: 1, startTime: 1 }).limit(5).populate('studentId', 'name email phone'),
+
+      Availability.find({ teacherId, day: todayDay, enabled: true }).sort({ startTime: 1 }),
+      
+      this.getAssignedStudents(teacherId),
+
+      Booking.find({
+        teacherId,
+        status: 'Approved',
+        date: { $gte: today }
+      })
+    ]);
+
+    // Generate Timetable dynamically
+    const allAvailability = await Availability.find({ teacherId, enabled: true }).sort({ day: 1, startTime: 1 });
+    const timetable = allAvailability.map(slot => {
+      const bookedSlots = allBookings.filter(b => b.availabilityId.toString() === slot._id.toString());
+      return {
+        ...slot.toObject(),
+        bookings: bookedSlots
+      };
+    });
+
+    return {
+      todaysBookings,
+      upcomingClasses,
+      availability,
+      assignedStudents,
+      timetable
+    };
+  }
+
+  /**
+   * Helper function to convert "HH:MM" time string to minutes from midnight
+   */
+  _timeToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  /**
+   * Helper function to check for overlapping time slots
+   */
+  _hasOverlap(slot1Start, slot1End, slot2Start, slot2End) {
+    const start1 = this._timeToMinutes(slot1Start);
+    const end1 = this._timeToMinutes(slot1End);
+    const start2 = this._timeToMinutes(slot2Start);
+    const end2 = this._timeToMinutes(slot2End);
+
+    return start1 < end2 && start2 < end1;
+  }
+
+  /**
+   * Get all availability slots for a teacher
+   */
+  async getAvailability(teacherId) {
+    return await Availability.find({ teacherId }).sort({ day: 1, startTime: 1 });
+  }
+
+  /**
+   * Add a new availability slot
+   */
+  async addAvailability(teacherId, slotData) {
+    const { subject, day, startTime, endTime, mode, enabled } = slotData;
+
+    if (!subject || !day || !startTime || !endTime || !mode) {
+      const error = new Error('subject, day, startTime, endTime, and mode are required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (this._timeToMinutes(startTime) >= this._timeToMinutes(endTime)) {
+      const error = new Error('startTime must be earlier than endTime');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Check for overlapping slots on the same day for this teacher
+    const existingSlots = await Availability.find({ teacherId, day });
+    for (const slot of existingSlots) {
+      if (this._hasOverlap(startTime, endTime, slot.startTime, slot.endTime)) {
+        const error = new Error(`Time slot overlaps with existing slot (${slot.startTime} - ${slot.endTime}) on ${day}`);
+        error.statusCode = 400;
+        throw error;
+      }
+    }
+
+    const newSlot = await Availability.create({
+      teacherId,
+      subject,
+      day,
+      startTime,
+      endTime,
+      mode,
+      enabled: enabled !== undefined ? enabled : true,
+    });
+
+    return newSlot;
+  }
+
+  /**
+   * Update an existing availability slot
+   */
+  async updateAvailability(teacherId, slotId, updateData) {
+    const slot = await Availability.findById(slotId);
+    if (!slot) {
+      const error = new Error('Availability slot not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (slot.teacherId.toString() !== teacherId.toString()) {
+      const error = new Error('Unauthorized to modify this availability slot');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const subject = updateData.subject || slot.subject;
+    const day = updateData.day || slot.day;
+    const startTime = updateData.startTime || slot.startTime;
+    const endTime = updateData.endTime || slot.endTime;
+    const mode = updateData.mode || slot.mode;
+
+    if (this._timeToMinutes(startTime) >= this._timeToMinutes(endTime)) {
+      const error = new Error('startTime must be earlier than endTime');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Check for overlapping slots excluding current slot
+    const existingSlots = await Availability.find({
+      teacherId,
+      day,
+      _id: { $ne: slotId },
+    });
+
+    for (const otherSlot of existingSlots) {
+      if (this._hasOverlap(startTime, endTime, otherSlot.startTime, otherSlot.endTime)) {
+        const error = new Error(`Time slot overlaps with existing slot (${otherSlot.startTime} - ${otherSlot.endTime}) on ${day}`);
+        error.statusCode = 400;
+        throw error;
+      }
+    }
+
+    if (updateData.subject !== undefined) slot.subject = updateData.subject;
+    if (updateData.day !== undefined) slot.day = updateData.day;
+    if (updateData.startTime !== undefined) slot.startTime = updateData.startTime;
+    if (updateData.endTime !== undefined) slot.endTime = updateData.endTime;
+    if (updateData.mode !== undefined) slot.mode = updateData.mode;
+    if (updateData.enabled !== undefined) slot.enabled = updateData.enabled;
+
+    await slot.save();
+    return slot;
+  }
+
+  /**
+   * Delete an availability slot
+   */
+  async deleteAvailability(teacherId, slotId) {
+    const slot = await Availability.findById(slotId);
+    if (!slot) {
+      const error = new Error('Availability slot not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (slot.teacherId.toString() !== teacherId.toString()) {
+      const error = new Error('Unauthorized to delete this availability slot');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    await slot.deleteOne();
+    return { id: slotId };
+  }
+}
+
+export default new TeacherService();
