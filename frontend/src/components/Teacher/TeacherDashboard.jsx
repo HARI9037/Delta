@@ -8,12 +8,20 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  const fetchData = () => {
+    setLoading(true)
     getTeacherDashboard()
-      .then((res) => setData(res.data?.data))
+      .then((dashRes) => {
+        setData(dashRes.data?.data)
+      })
       .catch(() => setError('Failed to load dashboard data.'))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchData()
   }, [])
+
 
   if (loading) return <Spinner />
   if (error) return <AlertMessage type="danger" message={error} />
@@ -121,7 +129,7 @@ export default function TeacherDashboard() {
                       <div>
                         <div className="fw-semibold small">{c.subject}</div>
                         <div className="text-muted" style={{ fontSize: '0.78rem' }}>
-                          {c.day} · {c.startTime} – {c.endTime}
+                          {new Date(c.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · {c.startTime} – {c.endTime}
                         </div>
                       </div>
                       <div className="text-end">
@@ -136,6 +144,7 @@ export default function TeacherDashboard() {
           </div>
         </div>
       </div>
-    </div>
+
+      </div>
   )
 }
