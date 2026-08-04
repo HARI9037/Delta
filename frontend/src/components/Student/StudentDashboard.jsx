@@ -90,7 +90,7 @@ export default function StudentDashboard() {
                       <div>
                         <div className="fw-semibold small">{c.subject}</div>
                         <div className="text-muted" style={{ fontSize: '0.78rem' }}>
-                          {c.startTime} – {c.endTime} · {c.teacherId?.name}
+                          {c.startTime} – {c.endTime} · {c.teacherId?.fullName}
                         </div>
                       </div>
                       <span
@@ -130,7 +130,7 @@ export default function StudentDashboard() {
                     <li key={b._id} className="list-group-item d-flex justify-content-between align-items-center">
                       <div>
                         <div className="fw-semibold small">{b.subject}</div>
-                        <div className="text-muted" style={{ fontSize: '0.78rem' }}>{b.day} · {b.startTime} – {b.endTime}</div>
+                        <div className="text-muted" style={{ fontSize: '0.78rem' }}>{new Date(b.date).toLocaleDateString()} · {b.startTime} – {b.endTime}</div>
                       </div>
                       <span className={`badge badge-${b.status?.toLowerCase()} px-2 py-1`}>{b.status}</span>
                     </li>

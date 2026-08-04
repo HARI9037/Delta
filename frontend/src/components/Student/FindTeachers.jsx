@@ -7,7 +7,6 @@ const MODES = ['Any', 'Online', 'Offline']
 
 function BookingModal({ teacher, onClose, onBookSuccess }) {
   const [selectedSlot, setSelectedSlot] = useState(null)
-  const [date, setDate] = useState('')
   const [reqs, setReqs] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -16,7 +15,6 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
 
   async function handleBook() {
     if (!selectedSlot) return setError('Please select a time slot')
-    if (!date) return setError('Please select a date')
     setError('')
     setLoading(true)
 
@@ -25,11 +23,9 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
         teacherId: teacher._id,
         availabilityId: selectedSlot._id,
         subject: selectedSlot.subject,
-        day: selectedSlot.day,
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
         mode: selectedSlot.mode,
-        date,
         requirement: reqs,
       })
       onBookSuccess()
@@ -83,7 +79,7 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
                       >
                         <div>
                           <div className="fw-semibold" style={{ fontSize: '0.85rem' }}>{slot.subject}</div>
-                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>{slot.day} · {slot.startTime} – {slot.endTime}</div>
+                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>{new Date(slot.date).toLocaleDateString()} · {slot.startTime} – {slot.endTime}</div>
                         </div>
                         <span className={`badge ${slot.mode === 'Online' ? 'bg-success' : 'bg-warning'}`}>
                           {slot.mode}
@@ -93,16 +89,7 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
                   ))}
                 </div>
 
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold">Session Date</label>
-                  <input
-                    type="date"
-                    className="form-control form-control-sm"
-                    min={new Date().toISOString().split('T')[0]}
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
+
 
                 <div className="mb-2">
                   <label className="form-label small fw-semibold">Requirements (Optional)</label>
@@ -242,8 +229,8 @@ export default function FindTeachers() {
           onClose={() => setSelectedTeacher(null)}
           onBookSuccess={() => {
             setSelectedTeacher(null)
-            setSuccessMsg('Booking successful! The teacher has been notified.')
-            setTimeout(() => setSuccessMsg(''), 4000)
+            setSuccessMsg('Booking successful! The class is now scheduled.')
+            setTimeout(() => setSuccessMsg(''), 5000)
           }}
         />
       )}
