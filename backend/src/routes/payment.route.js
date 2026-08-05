@@ -2,11 +2,7 @@ import express from 'express';
 const router = express.Router();
 import paymentController from '../controllers/payment.controller.js';
 import { authenticateStudent } from '../middlewares/student.middlewares.js';
-import { authenticateTeacher } from '../middlewares/teacher.middlewares.js';
-
-// ── Public ──────────────────────────────────────
-// Anyone (incl. frontend pre-login) can read the config to know the fee amount
-router.get('/config', (req, res) => paymentController.getConfig(req, res));
+import { authenticateTeacher, authorizeAdmin } from '../middlewares/teacher.middlewares.js';
 
 // ── Student routes ───────────────────────────────
 // Get this student's payment history
@@ -21,15 +17,16 @@ router.post('/demo-pay', authenticateStudent, (req, res) => paymentController.de
 // Legacy: upload a receipt URL
 router.post('/receipt', authenticateStudent, (req, res) => paymentController.uploadReceipt(req, res));
 
-// ── Admin / Teacher routes ────────────────────────
-// Update fee config (admin)
-router.put('/config', authenticateTeacher, (req, res) => paymentController.updateConfig(req, res));
+// ── Admin routes ─────────────────────────────────
+// Fee config is read/written only by admin
+router.get('/config', authenticateTeacher, authorizeAdmin, (req, res) => paymentController.getConfig(req, res));
+router.put('/config', authenticateTeacher, authorizeAdmin, (req, res) => paymentController.updateConfig(req, res));
 
 // All students' payments
-router.get('/admin/all', authenticateTeacher, (req, res) => paymentController.getAllPayments(req, res));
+router.get('/admin/all', authenticateTeacher, authorizeAdmin, (req, res) => paymentController.getAllPayments(req, res));
 
 // Verify / reject a specific payment
-router.put('/admin/:id/verify', authenticateTeacher, (req, res) => paymentController.verifyPayment(req, res));
-router.put('/admin/:id/reject', authenticateTeacher, (req, res) => paymentController.rejectPayment(req, res));
+router.put('/admin/:id/verify', authenticateTeacher, authorizeAdmin, (req, res) => paymentController.verifyPayment(req, res));
+router.put('/admin/:id/reject', authenticateTeacher, authorizeAdmin, (req, res) => paymentController.rejectPayment(req, res));
 
 export default router;

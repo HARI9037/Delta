@@ -33,6 +33,19 @@ const authenticateTeacher = async (req, res, next) => {
   }
 };
 
+const authorizeAdmin = async (req, res, next) => {
+  if (!req.user) {
+    return responseHelper.error(res, 401, 'Access denied. No authenticated user.');
+  }
+
+  if (req.user.role !== 'admin') {
+    return responseHelper.error(res, 403, 'Access denied. Admin privileges required.');
+  }
+
+  next();
+};
+
 export {
   authenticateTeacher,
+  authorizeAdmin,
 };

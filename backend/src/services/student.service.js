@@ -1,9 +1,18 @@
 import jwt from 'jsonwebtoken';
 import Student from '../models/student.model.js';
 import Teacher from '../models/teacher.model.js';
-import Availability from '../models/availability.model.js';
+import Availability, { MIN_STUDENTS_PER_SLOT } from '../models/availability.model.js';
 import Booking from '../models/booking.model.js';
 import Payment from '../models/payment.model.js';
+
+// Local timezone date as "YYYY-MM-DD" (matches date strings from <input type="date">)
+function localDateStr(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 class StudentService {
   /**
    * Register a new student
@@ -18,11 +27,25 @@ class StudentService {
       throw error;
     }
 
+    // Frontend sends "grade"; model stores it as "class"
+    if (studentData.grade !== undefined) {
+      studentData.class = studentData.grade;
+      delete studentData.grade;
+    }
+
     const student = await Student.create(studentData);
     const studentObj = student.toObject();
     delete studentObj.password;
 
-    return studentObj;
+    const token = jwt.sign(
+      { id: student._id, role: 'student' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    studentObj.grade = studentObj.class;
+
+    return { student: studentObj, token };
   }
 
   /**
@@ -119,7 +142,7 @@ class StudentService {
   /**
    * Get all teachers with optional filters
    */
-  async getAllTeachers(filters = {}) {
+  async getAllTeachers(studentId, filters = {}) {
     const query = { status: 'Verified', active: true };
     if (filters.subject) {
       query.subjects = { $in: [filters.subject] };
@@ -131,11 +154,44 @@ class StudentService {
     
     const teacherIds = teachers.map(t => t._id);
     const availabilities = await Availability.find({ teacherId: { $in: teacherIds }, enabled: true }).sort({ date: 1, startTime: 1 }).lean();
-    
+
+    const availabilityIds = availabilities.map(a => a._id);
+    const [slotBookings, myBookings] = await Promise.all([
+      Booking.find({
+        availabilityId: { $in: availabilityIds },
+        status: { $in: ['Pending', 'Approved'] },
+      }).select('availabilityId').lean(),
+      Booking.find({
+        studentId,
+        status: { $in: ['Pending', 'Approved'] },
+      }).select('availabilityId').lean(),
+    ]);
+
+    // Count active bookings per slot
+    const slotCounts = new Map();
+    for (const b of slotBookings) {
+      const key = b.availabilityId.toString();
+      slotCounts.set(key, (slotCounts.get(key) || 0) + 1);
+    }
+
+    // Slots this student has already booked
+    const mySlots = new Set(myBookings.map(b => b.availabilityId.toString()));
+
     return teachers.map(teacher => ({
       ...teacher,
       name: teacher.fullName,
-      availability: availabilities.filter(a => a.teacherId.toString() === teacher._id.toString())
+      availability: availabilities
+        .filter(a => a.teacherId.toString() === teacher._id.toString())
+        .map(a => {
+          const count = slotCounts.get(a._id.toString()) || 0;
+          const minStudents = a.minStudents || MIN_STUDENTS_PER_SLOT;
+          return {
+            ...a,
+            bookedCount: count,
+            minStudents,
+            isBooked: count >= minStudents || mySlots.has(a._id.toString()),
+          };
+        })
     }));
   }
 
@@ -173,6 +229,34 @@ class StudentService {
       throw error;
     }
 
+    const minStudents = availability.minStudents || MIN_STUDENTS_PER_SLOT;
+
+    // Same student cannot book the same teacher for the same day & time twice
+    const duplicate = await Booking.findOne({
+      studentId,
+      teacherId,
+      date: availability.date,
+      startTime,
+      endTime,
+      status: { $in: ['Pending', 'Approved'] },
+    });
+    if (duplicate) {
+      const error = new Error('You have already booked this teacher for this day and time');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Slot is full once it reaches the minimum number of students
+    const activeCount = await Booking.countDocuments({
+      availabilityId,
+      status: { $in: ['Pending', 'Approved'] },
+    });
+    if (activeCount >= minStudents) {
+      const error = new Error('This time slot is already full');
+      error.statusCode = 400;
+      throw error;
+    }
+
     const booking = await Booking.create({
       studentId,
       teacherId,
@@ -186,6 +270,15 @@ class StudentService {
       status: 'Approved'
     });
 
+    // Automatically close the slot once the minimum number of students is reached
+    const newCount = await Booking.countDocuments({
+      availabilityId,
+      status: { $in: ['Pending', 'Approved'] },
+    });
+    if (newCount >= minStudents) {
+      await Availability.updateOne({ _id: availabilityId }, { enabled: false });
+    }
+
     return booking;
   }
 
@@ -197,8 +290,8 @@ class StudentService {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const todayStr = localDateStr();
+    const tomorrowStr = localDateStr(tomorrow);
 
     const currentMonth = today.toLocaleString('default', { month: 'long' });
     const currentYear = today.getFullYear().toString();

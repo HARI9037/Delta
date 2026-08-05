@@ -45,6 +45,9 @@ const availabilitySchema = new mongoose.Schema(
   }
 );
 
+// Minimum number of students required to fill a slot before it closes
+export const MIN_STUDENTS_PER_SLOT = 4;
+
 const Availability = mongoose.model('Availability', availabilitySchema);
 
 export default Availability;

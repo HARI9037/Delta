@@ -61,7 +61,7 @@ class StudentController {
 
   async getAllTeachers(req, res) {
     try {
-      const teachers = await studentService.getAllTeachers(req.query);
+      const teachers = await studentService.getAllTeachers(req.user._id, req.query);
       return responseHelper.success(res, 200, 'Teachers fetched successfully', teachers);
     } catch (error) {
       return responseHelper.error(

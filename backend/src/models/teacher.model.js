@@ -66,6 +66,11 @@ const teacherSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    role: {
+      type: String,
+      enum: ['teacher', 'admin'],
+      default: 'teacher',
+    },
   },
   {
     timestamps: true,

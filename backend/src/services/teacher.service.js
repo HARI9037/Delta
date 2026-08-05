@@ -5,6 +5,14 @@ import Booking from '../models/booking.model.js';
 // Student model import for future query integration
 import Student from '../models/student.model.js';
 
+// Local timezone date as "YYYY-MM-DD" (matches date strings from <input type="date">)
+function localDateStr(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 class TeacherService {
   /**
    * Register a new teacher
@@ -23,7 +31,13 @@ class TeacherService {
     const teacherObj = teacher.toObject();
     delete teacherObj.password;
 
-    return teacherObj;
+    const token = jwt.sign(
+      { id: teacher._id, role: teacher.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return { teacher: teacherObj, token };
   }
 
   /**
@@ -63,7 +77,7 @@ class TeacherService {
     }
 
     const token = jwt.sign(
-      { id: teacher._id, role: 'teacher' },
+      { id: teacher._id, role: teacher.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -126,8 +140,8 @@ class TeacherService {
    */
   async getAssignedStudents(teacherId) {
     const bookings = await Booking.find({ teacherId, status: 'Approved' }).distinct('studentId');
-    const students = await Student.find({ _id: { $in: bookings } }).select('-password');
-    return students;
+    const students = await Student.find({ _id: { $in: bookings } }).select('-password').lean();
+    return students.map((s) => ({ ...s, grade: s.class }));
   }
 
   /**
@@ -138,19 +152,20 @@ class TeacherService {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const todayStr = today.toISOString().split('T')[0];
+
+    const todayStr = localDateStr();
+    const tomorrowStr = localDateStr(tomorrow);
 
     const [todaysBookings, upcomingClasses, availability, assignedStudents, allBookings] = await Promise.all([
       Booking.find({
         teacherId,
-        date: { $gte: today, $lt: tomorrow },
+        date: todayStr,
         status: 'Approved'
       }).populate('studentId', 'name email phone'),
 
       Booking.find({
         teacherId,
-        date: { $gte: tomorrow },
+        date: { $gte: tomorrowStr },
         status: 'Approved'
       }).sort({ date: 1, startTime: 1 }).limit(5).populate('studentId', 'name email phone'),
 
@@ -161,25 +176,28 @@ class TeacherService {
       Booking.find({
         teacherId,
         status: 'Approved',
-        date: { $gte: today }
+        date: { $gte: todayStr }
       })
     ]);
 
-    // Generate Timetable dynamically grouped by date
-    const allAvailability = await Availability.find({ teacherId, enabled: true, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
+    // Timetable is generated only when the availability is entirely closed
+    const allAvailability = await Availability.find({ teacherId, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
+    const hasOpenSlots = allAvailability.some(slot => slot.enabled !== false);
     const timetable = {};
-    
-    allAvailability.forEach(slot => {
-      if (!timetable[slot.date]) {
-        timetable[slot.date] = [];
-      }
-      const bookedSlots = allBookings.filter(b => b.availabilityId.toString() === slot._id.toString());
-      timetable[slot.date].push({
-        ...slot.toObject(),
-        isBooked: bookedSlots.length > 0,
-        bookings: bookedSlots
+
+    if (!hasOpenSlots && allAvailability.length > 0) {
+      allAvailability.forEach(slot => {
+        if (!timetable[slot.date]) {
+          timetable[slot.date] = [];
+        }
+        const slotBookings = allBookings.filter(b => b.availabilityId.toString() === slot._id.toString());
+        timetable[slot.date].push({
+          ...slot.toObject(),
+          isBooked: slotBookings.length > 0,
+          bookings: slotBookings
+        });
       });
-    });
+    }
 
     return {
       todaysClasses: todaysBookings,
@@ -216,7 +234,7 @@ class TeacherService {
    * Get all availability slots for a teacher
    */
   async getAvailability(teacherId) {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = localDateStr();
     return await Availability.find({ teacherId, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
   }
 
