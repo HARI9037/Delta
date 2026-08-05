@@ -14,9 +14,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/user', studentRoutes);
-app.use('/teacher', teacherRoutes);
-app.use('/payment', paymentRoutes);
+app.use('/api/user', studentRoutes);
+app.use('/api/teacher', teacherRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
