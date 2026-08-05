@@ -22,13 +22,6 @@ const paymentSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Amount is required'],
     },
-<<<<<<< Updated upstream
-    status: {
-      type: Boolean,
-      default: false,
-      
-    },
-=======
     currency: {
       type: String,
       default: 'INR',
@@ -46,17 +39,11 @@ const paymentSchema = new mongoose.Schema(
       default: false,
     },
     // URL / path of the uploaded receipt image (optional, for Uploaded state)
->>>>>>> Stashed changes
     receipt: {
       type: String,
       trim: true,
       default: '',
     },
-<<<<<<< Updated upstream
-    verified: {
-      type: Boolean,
-      default: false,
-=======
     // Auto-generated fake transaction ID on demo payment
     transactionId: {
       type: String,
@@ -79,7 +66,6 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: '',
->>>>>>> Stashed changes
     },
   },
   {

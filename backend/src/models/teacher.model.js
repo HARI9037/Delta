@@ -57,14 +57,11 @@ const teacherSchema = new mongoose.Schema(
       enum: ['Pending', 'Verified', 'Rejected'],
       default: 'Verified',
     },
-<<<<<<< Updated upstream
-=======
     bio: {
       type: String,
       trim: true,
       default: '',
     },
->>>>>>> Stashed changes
     active: {
       type: Boolean,
       default: true,

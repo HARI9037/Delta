@@ -2,13 +2,6 @@ import express from 'express';
 const router = express.Router();
 import paymentController from '../controllers/payment.controller.js';
 import { authenticateStudent } from '../middlewares/student.middlewares.js';
-<<<<<<< Updated upstream
-
-// All payment routes are protected for students
-router.get('/', authenticateStudent, (req, res) => paymentController.getPayments(req, res));
-router.post('/receipt', authenticateStudent, (req, res) => paymentController.uploadReceipt(req, res));
-
-=======
 import { authenticateTeacher } from '../middlewares/teacher.middlewares.js';
 
 // ── Public ──────────────────────────────────────
@@ -39,5 +32,4 @@ router.get('/admin/all', authenticateTeacher, (req, res) => paymentController.ge
 router.put('/admin/:id/verify', authenticateTeacher, (req, res) => paymentController.verifyPayment(req, res));
 router.put('/admin/:id/reject', authenticateTeacher, (req, res) => paymentController.rejectPayment(req, res));
 
->>>>>>> Stashed changes
 export default router;

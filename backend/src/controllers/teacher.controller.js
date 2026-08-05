@@ -133,8 +133,6 @@ class TeacherController {
     }
   }
 
-<<<<<<< Updated upstream
-=======
   async getBookings(req, res) {
     try {
       const bookings = await teacherService.getBookings(req.user._id, req.query.status);
@@ -151,7 +149,6 @@ class TeacherController {
 
 
 
->>>>>>> Stashed changes
   async getDashboard(req, res) {
     try {
       const dashboardData = await teacherService.getDashboard(req.user._id);

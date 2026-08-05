@@ -2,30 +2,16 @@ import paymentService from '../services/payment.service.js';
 import responseHelper from '../utils/response.js';
 
 class PaymentController {
-<<<<<<< Updated upstream
-=======
   // ──────────────────────────────────────────────
   // Student endpoints
   // ──────────────────────────────────────────────
 
   /** GET /payment — student's full payment history */
->>>>>>> Stashed changes
   async getPayments(req, res) {
     try {
       const payments = await paymentService.getPayments(req.user._id);
       return responseHelper.success(res, 200, 'Payments fetched successfully', payments);
     } catch (error) {
-<<<<<<< Updated upstream
-      return responseHelper.error(
-        res,
-        error.statusCode || 400,
-        error.message || 'Failed to fetch payments',
-        error.message
-      );
-    }
-  }
-
-=======
       return responseHelper.error(res, error.statusCode || 400, error.message || 'Failed to fetch payments', error.message);
     }
   }
@@ -51,20 +37,11 @@ class PaymentController {
   }
 
   /** POST /payment/receipt — upload receipt URL (legacy, kept for compatibility) */
->>>>>>> Stashed changes
   async uploadReceipt(req, res) {
     try {
       const payment = await paymentService.uploadReceipt(req.user._id, req.body);
       return responseHelper.success(res, 201, 'Receipt uploaded successfully', payment);
     } catch (error) {
-<<<<<<< Updated upstream
-      return responseHelper.error(
-        res,
-        error.statusCode || 400,
-        error.message || 'Failed to upload receipt',
-        error.message
-      );
-=======
       return responseHelper.error(res, error.statusCode || 400, error.message || 'Failed to upload receipt', error.message);
     }
   }
@@ -124,7 +101,6 @@ class PaymentController {
       return responseHelper.success(res, 200, 'Payment rejected', payment);
     } catch (error) {
       return responseHelper.error(res, error.statusCode || 400, error.message || 'Failed to reject payment', error.message);
->>>>>>> Stashed changes
     }
   }
 }

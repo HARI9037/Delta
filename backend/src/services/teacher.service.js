@@ -78,20 +78,13 @@ class TeacherService {
    * Fetch teacher profile by ID
    */
   async getTeacherProfile(teacherId) {
-<<<<<<< Updated upstream
-    const teacher = await Teacher.findById(teacherId);
-=======
     const teacher = await Teacher.findById(teacherId).lean();
->>>>>>> Stashed changes
     if (!teacher) {
       const error = new Error('Teacher profile not found');
       error.statusCode = 404;
       throw error;
     }
-<<<<<<< Updated upstream
-=======
     teacher.name = teacher.fullName;
->>>>>>> Stashed changes
     return teacher;
   }
 
@@ -99,11 +92,7 @@ class TeacherService {
    * Update editable fields of teacher profile
    */
   async updateTeacherProfile(teacherId, updateData) {
-<<<<<<< Updated upstream
-    const { phone, qualification, teachingExperience, teachingMode, profilePhoto, password } = updateData;
-=======
     const { name, fullName, phone, qualification, teachingExperience, teachingMode, profilePhoto, password, bio, subjects } = updateData;
->>>>>>> Stashed changes
 
     const teacher = await Teacher.findById(teacherId);
     if (!teacher) {
@@ -112,31 +101,22 @@ class TeacherService {
       throw error;
     }
 
-<<<<<<< Updated upstream
-=======
     if (name !== undefined) teacher.fullName = name;
     if (fullName !== undefined) teacher.fullName = fullName;
->>>>>>> Stashed changes
     if (phone !== undefined) teacher.phone = phone;
     if (qualification !== undefined) teacher.qualification = qualification;
     if (teachingExperience !== undefined) teacher.teachingExperience = teachingExperience;
     if (teachingMode !== undefined) teacher.teachingMode = teachingMode;
     if (profilePhoto !== undefined) teacher.profilePhoto = profilePhoto;
-<<<<<<< Updated upstream
-=======
     if (bio !== undefined) teacher.bio = bio;
     if (subjects !== undefined) teacher.subjects = subjects;
->>>>>>> Stashed changes
     if (password) teacher.password = password; // Triggers pre-save password hash hook
 
     await teacher.save();
 
     const teacherObj = teacher.toObject();
     delete teacherObj.password;
-<<<<<<< Updated upstream
-=======
     teacherObj.name = teacherObj.fullName;
->>>>>>> Stashed changes
 
     return teacherObj;
   }
@@ -159,13 +139,7 @@ class TeacherService {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-<<<<<<< Updated upstream
-    // Day string e.g., 'Monday'
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const todayDay = days[today.getDay()];
-=======
     const todayStr = today.toISOString().split('T')[0];
->>>>>>> Stashed changes
 
     const [todaysBookings, upcomingClasses, availability, assignedStudents, allBookings] = await Promise.all([
       Booking.find({
@@ -180,11 +154,7 @@ class TeacherService {
         status: 'Approved'
       }).sort({ date: 1, startTime: 1 }).limit(5).populate('studentId', 'name email phone'),
 
-<<<<<<< Updated upstream
-      Availability.find({ teacherId, day: todayDay, enabled: true }).sort({ startTime: 1 }),
-=======
       Availability.find({ teacherId, date: todayStr, enabled: true }).sort({ startTime: 1 }),
->>>>>>> Stashed changes
       
       this.getAssignedStudents(teacherId),
 
@@ -195,22 +165,6 @@ class TeacherService {
       })
     ]);
 
-<<<<<<< Updated upstream
-    // Generate Timetable dynamically
-    const allAvailability = await Availability.find({ teacherId, enabled: true }).sort({ day: 1, startTime: 1 });
-    const timetable = allAvailability.map(slot => {
-      const bookedSlots = allBookings.filter(b => b.availabilityId.toString() === slot._id.toString());
-      return {
-        ...slot.toObject(),
-        bookings: bookedSlots
-      };
-    });
-
-    return {
-      todaysBookings,
-      upcomingClasses,
-      availability,
-=======
     // Generate Timetable dynamically grouped by date
     const allAvailability = await Availability.find({ teacherId, enabled: true, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
     const timetable = {};
@@ -233,7 +187,6 @@ class TeacherService {
       availability,
       totalStudents: assignedStudents.length,
       activeSlots: availability.length,
->>>>>>> Stashed changes
       assignedStudents,
       timetable
     };
@@ -263,29 +216,18 @@ class TeacherService {
    * Get all availability slots for a teacher
    */
   async getAvailability(teacherId) {
-<<<<<<< Updated upstream
-    return await Availability.find({ teacherId }).sort({ day: 1, startTime: 1 });
-=======
     const todayStr = new Date().toISOString().split('T')[0];
     return await Availability.find({ teacherId, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
->>>>>>> Stashed changes
   }
 
   /**
    * Add a new availability slot
    */
   async addAvailability(teacherId, slotData) {
-<<<<<<< Updated upstream
-    const { subject, day, startTime, endTime, mode, enabled } = slotData;
-
-    if (!subject || !day || !startTime || !endTime || !mode) {
-      const error = new Error('subject, day, startTime, endTime, and mode are required');
-=======
     const { subject, date, startTime, endTime, mode, enabled } = slotData;
 
     if (!subject || !date || !startTime || !endTime || !mode) {
       const error = new Error('subject, date, startTime, endTime, and mode are required');
->>>>>>> Stashed changes
       error.statusCode = 400;
       throw error;
     }
@@ -296,19 +238,11 @@ class TeacherService {
       throw error;
     }
 
-<<<<<<< Updated upstream
-    // Check for overlapping slots on the same day for this teacher
-    const existingSlots = await Availability.find({ teacherId, day });
-    for (const slot of existingSlots) {
-      if (this._hasOverlap(startTime, endTime, slot.startTime, slot.endTime)) {
-        const error = new Error(`Time slot overlaps with existing slot (${slot.startTime} - ${slot.endTime}) on ${day}`);
-=======
     // Check for overlapping slots on the same date for this teacher
     const existingSlots = await Availability.find({ teacherId, date });
     for (const slot of existingSlots) {
       if (this._hasOverlap(startTime, endTime, slot.startTime, slot.endTime)) {
         const error = new Error(`Time slot overlaps with existing slot (${slot.startTime} - ${slot.endTime}) on ${date}`);
->>>>>>> Stashed changes
         error.statusCode = 400;
         throw error;
       }
@@ -317,11 +251,7 @@ class TeacherService {
     const newSlot = await Availability.create({
       teacherId,
       subject,
-<<<<<<< Updated upstream
-      day,
-=======
       date,
->>>>>>> Stashed changes
       startTime,
       endTime,
       mode,
@@ -349,11 +279,7 @@ class TeacherService {
     }
 
     const subject = updateData.subject || slot.subject;
-<<<<<<< Updated upstream
-    const day = updateData.day || slot.day;
-=======
     const date = updateData.date || slot.date;
->>>>>>> Stashed changes
     const startTime = updateData.startTime || slot.startTime;
     const endTime = updateData.endTime || slot.endTime;
     const mode = updateData.mode || slot.mode;
@@ -367,32 +293,20 @@ class TeacherService {
     // Check for overlapping slots excluding current slot
     const existingSlots = await Availability.find({
       teacherId,
-<<<<<<< Updated upstream
-      day,
-=======
       date,
->>>>>>> Stashed changes
       _id: { $ne: slotId },
     });
 
     for (const otherSlot of existingSlots) {
       if (this._hasOverlap(startTime, endTime, otherSlot.startTime, otherSlot.endTime)) {
-<<<<<<< Updated upstream
-        const error = new Error(`Time slot overlaps with existing slot (${otherSlot.startTime} - ${otherSlot.endTime}) on ${day}`);
-=======
         const error = new Error(`Time slot overlaps with existing slot (${otherSlot.startTime} - ${otherSlot.endTime}) on ${date}`);
->>>>>>> Stashed changes
         error.statusCode = 400;
         throw error;
       }
     }
 
     if (updateData.subject !== undefined) slot.subject = updateData.subject;
-<<<<<<< Updated upstream
-    if (updateData.day !== undefined) slot.day = updateData.day;
-=======
     if (updateData.date !== undefined) slot.date = updateData.date;
->>>>>>> Stashed changes
     if (updateData.startTime !== undefined) slot.startTime = updateData.startTime;
     if (updateData.endTime !== undefined) slot.endTime = updateData.endTime;
     if (updateData.mode !== undefined) slot.mode = updateData.mode;
@@ -402,8 +316,6 @@ class TeacherService {
     return slot;
   }
 
-<<<<<<< Updated upstream
-=======
 
   /**
    * Get all bookings for the teacher (with optional status filter)
@@ -416,7 +328,6 @@ class TeacherService {
       .populate('studentId', 'name email phone');
   }
 
->>>>>>> Stashed changes
   /**
    * Delete an availability slot
    */

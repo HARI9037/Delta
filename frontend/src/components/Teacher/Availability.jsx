@@ -13,7 +13,7 @@ export default function Availability() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [form, setForm] = useState({ subject: '', day: 'Monday', startTime: '09:00', endTime: '10:00', mode: 'Online', enabled: true })
+  const [form, setForm] = useState({ subject: '', date: new Date().toISOString().split('T')[0], startTime: '09:00', endTime: '10:00', mode: 'Online', enabled: true })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const subjects = user?.subjects || []
@@ -91,10 +91,8 @@ export default function Availability() {
                   </select>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label small fw-semibold">Day of Week</label>
-                  <select name="day" className="form-select form-select-sm" value={form.day} onChange={handleChange}>
-                    {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                  <label className="form-label small fw-semibold">Date</label>
+                  <input type="date" name="date" className="form-control form-control-sm" value={form.date} onChange={handleChange} required min={new Date().toISOString().split('T')[0]} />
                 </div>
                 <div className="row g-2 mb-3">
                   <div className="col-6">
@@ -131,7 +129,7 @@ export default function Availability() {
                 <table className="table table-hover align-middle mb-0">
                   <thead>
                     <tr>
-                      <th className="px-3">Subject & Day</th>
+                      <th className="px-3">Subject & Date</th>
                       <th>Time</th>
                       <th>Mode</th>
                       <th>Status</th>
@@ -150,7 +148,7 @@ export default function Availability() {
                         <tr key={slot._id}>
                           <td className="px-3">
                             <div className="fw-semibold small">{slot.subject}</div>
-                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>{slot.day}</div>
+                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>{new Date(slot.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                           </td>
                           <td className="small">{slot.startTime} – {slot.endTime}</td>
                           <td>

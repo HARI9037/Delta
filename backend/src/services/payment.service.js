@@ -1,8 +1,4 @@
 import Payment from '../models/payment.model.js';
-<<<<<<< Updated upstream
-
-class PaymentService {
-=======
 import PaymentConfig from '../models/paymentConfig.model.js';
 import Student from '../models/student.model.js';
 
@@ -120,18 +116,14 @@ class PaymentService {
   /**
    * Get all past payments for this student (history)
    */
->>>>>>> Stashed changes
   async getPayments(studentId) {
     const payments = await Payment.find({ studentId }).sort({ createdAt: -1 });
     return payments;
   }
 
-<<<<<<< Updated upstream
-=======
   /**
    * Upload a receipt URL for a payment (legacy method kept for compatibility)
    */
->>>>>>> Stashed changes
   async uploadReceipt(studentId, paymentData) {
     const { month, year, amount, receipt } = paymentData;
 
@@ -141,11 +133,7 @@ class PaymentService {
       throw error;
     }
 
-<<<<<<< Updated upstream
-    // Check if a payment for this month and year already exists
-=======
     const config = await this.getConfig();
->>>>>>> Stashed changes
     let payment = await Payment.findOne({ studentId, month, year });
 
     if (payment) {
@@ -160,10 +148,7 @@ class PaymentService {
         month,
         year,
         amount,
-<<<<<<< Updated upstream
-=======
         currency: config.currency,
->>>>>>> Stashed changes
         receipt,
         status: 'Uploaded',
       });
@@ -171,8 +156,6 @@ class PaymentService {
 
     return payment;
   }
-<<<<<<< Updated upstream
-=======
 
   // ──────────────────────────────────────────────
   // Admin-facing
@@ -232,7 +215,6 @@ class PaymentService {
     await config.save();
     return config;
   }
->>>>>>> Stashed changes
 }
 
 export default new PaymentService();
