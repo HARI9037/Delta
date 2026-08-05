@@ -15,6 +15,7 @@ const teacherLinks = [
   { to: '/teacher/availability', icon: 'bi-calendar-week',    label: 'Availability' },
   { to: '/teacher/timetable',    icon: 'bi-table',            label: 'Timetable'    },
   { to: '/teacher/students',     icon: 'bi-people',           label: 'My Students'  },
+  { to: '/teacher/payments',     icon: 'bi-credit-card',      label: 'Payments'     },
   { to: '/teacher/profile',      icon: 'bi-person-circle',    label: 'Profile'      },
 ]
 
