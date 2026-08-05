@@ -1,9 +1,10 @@
 import axios from 'axios'
 
 // All API calls go to the backend running on port 5000.
-// Vite proxy (vite.config.js) forwards /user, /teacher, /payment to localhost:5000.
+// Vite proxy (vite.config.js) forwards /api to localhost:5000.
+// Backend routes are mounted under /api (e.g. /api/user, /api/teacher, /api/payment).
 const api = axios.create({
-  baseURL: '/',
+  baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
 })
 
