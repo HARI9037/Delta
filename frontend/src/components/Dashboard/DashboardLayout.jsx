@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from '../Sidebar/Sidebar'
 import Navbar from '../Navbar/Navbar'
+import PaymentGate from '../Payment/PaymentGate'
+import { useAuth } from '../../context/AuthContext'
 
 // Maps URL path → page title shown in the navbar
 const titles = {
@@ -15,12 +17,15 @@ const titles = {
   '/teacher/timetable':  'Timetable',
   '/teacher/students':   'My Students',
   '/teacher/profile':    'My Profile',
+  '/teacher/payments':   'Payment Management',
 }
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const { user } = useAuth()
   const title = titles[location.pathname] || 'Dashboard'
+  const isStudent = user?.role === 'student'
 
   return (
     <div>
@@ -28,7 +33,13 @@ export default function DashboardLayout() {
       <div className="main-area">
         <Navbar title={title} onMenuToggle={() => setSidebarOpen(true)} />
         <div className="page-content">
-          <Outlet />
+          {isStudent ? (
+            <PaymentGate>
+              <Outlet />
+            </PaymentGate>
+          ) : (
+            <Outlet />
+          )}
         </div>
       </div>
     </div>
