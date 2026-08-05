@@ -77,12 +77,20 @@ class StudentService {
    * Fetch student profile by ID
    */
   async getStudentProfile(studentId) {
+<<<<<<< Updated upstream
     const student = await Student.findById(studentId);
+=======
+    const student = await Student.findById(studentId).lean();
+>>>>>>> Stashed changes
     if (!student) {
       const error = new Error('Student profile not found');
       error.statusCode = 444;
       throw error;
     }
+<<<<<<< Updated upstream
+=======
+    student.grade = student.class;
+>>>>>>> Stashed changes
     return student;
   }
 
@@ -90,11 +98,15 @@ class StudentService {
    * Update editable fields of student profile
    */
   async updateStudentProfile(studentId, updateData) {
+<<<<<<< Updated upstream
     const { phone, password, profilePhoto } = updateData;
     const allowedUpdates = {};
 
     if (phone !== undefined) allowedUpdates.phone = phone;
     if (profilePhoto !== undefined) allowedUpdates.profilePhoto = profilePhoto;
+=======
+    const { name, phone, password, profilePhoto, grade } = updateData;
+>>>>>>> Stashed changes
 
     const student = await Student.findById(studentId);
     if (!student) {
@@ -103,14 +115,26 @@ class StudentService {
       throw error;
     }
 
+<<<<<<< Updated upstream
     if (phone !== undefined) student.phone = phone;
     if (profilePhoto !== undefined) student.profilePhoto = profilePhoto;
+=======
+    if (name !== undefined) student.name = name;
+    if (phone !== undefined) student.phone = phone;
+    if (profilePhoto !== undefined) student.profilePhoto = profilePhoto;
+    if (grade !== undefined) student.class = grade;
+    if (updateData.class !== undefined) student.class = updateData.class;
+>>>>>>> Stashed changes
     if (password) student.password = password; // Will trigger pre-save password hash hook
 
     await student.save();
 
     const studentObj = student.toObject();
     delete studentObj.password;
+<<<<<<< Updated upstream
+=======
+    studentObj.grade = studentObj.class;
+>>>>>>> Stashed changes
 
     return studentObj;
   }
@@ -129,7 +153,11 @@ class StudentService {
     const teachers = await Teacher.find(query).select('-password').lean();
     
     const teacherIds = teachers.map(t => t._id);
+<<<<<<< Updated upstream
     const availabilities = await Availability.find({ teacherId: { $in: teacherIds }, enabled: true }).sort({ day: 1, startTime: 1 }).lean();
+=======
+    const availabilities = await Availability.find({ teacherId: { $in: teacherIds }, enabled: true }).sort({ date: 1, startTime: 1 }).lean();
+>>>>>>> Stashed changes
     
     return teachers.map(teacher => ({
       ...teacher,
@@ -148,7 +176,11 @@ class StudentService {
       error.statusCode = 404;
       throw error;
     }
+<<<<<<< Updated upstream
     const availability = await Availability.find({ teacherId, enabled: true }).sort({ day: 1, startTime: 1 });
+=======
+    const availability = await Availability.find({ teacherId, enabled: true }).sort({ date: 1, startTime: 1 });
+>>>>>>> Stashed changes
     return { teacher, availability };
   }
 
@@ -156,9 +188,15 @@ class StudentService {
    * Book a slot
    */
   async bookSlot(studentId, bookingData) {
+<<<<<<< Updated upstream
     const { teacherId, availabilityId, subject, day, date, startTime, endTime, mode, requirement } = bookingData;
 
     if (!teacherId || !availabilityId || !subject || !day || !date || !startTime || !endTime || !mode) {
+=======
+    const { teacherId, availabilityId, subject, startTime, endTime, mode, requirement } = bookingData;
+
+    if (!teacherId || !availabilityId || !subject || !startTime || !endTime || !mode) {
+>>>>>>> Stashed changes
       const error = new Error('Missing required booking fields');
       error.statusCode = 400;
       throw error;
@@ -172,6 +210,7 @@ class StudentService {
       throw error;
     }
 
+<<<<<<< Updated upstream
     // Check if slot is already booked for this specific date
     const existingBooking = await Booking.findOne({
       teacherId,
@@ -187,13 +226,19 @@ class StudentService {
       throw error;
     }
 
+=======
+>>>>>>> Stashed changes
     const booking = await Booking.create({
       studentId,
       teacherId,
       availabilityId,
       subject,
+<<<<<<< Updated upstream
       day,
       date: new Date(date),
+=======
+      date: availability.date,
+>>>>>>> Stashed changes
       startTime,
       endTime,
       mode,
@@ -212,6 +257,11 @@ class StudentService {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+<<<<<<< Updated upstream
+=======
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+>>>>>>> Stashed changes
 
     const currentMonth = today.toLocaleString('default', { month: 'long' });
     const currentYear = today.getFullYear().toString();
@@ -219,13 +269,21 @@ class StudentService {
     const [todaysClasses, upcomingClasses, bookingHistory, currentMonthPayment] = await Promise.all([
       Booking.find({
         studentId,
+<<<<<<< Updated upstream
         date: { $gte: today, $lt: tomorrow },
+=======
+        date: todayStr,
+>>>>>>> Stashed changes
         status: 'Approved'
       }).populate('teacherId', 'fullName email phone'),
 
       Booking.find({
         studentId,
+<<<<<<< Updated upstream
         date: { $gte: tomorrow },
+=======
+        date: { $gte: tomorrowStr },
+>>>>>>> Stashed changes
         status: 'Approved'
       }).sort({ date: 1, startTime: 1 }).limit(5).populate('teacherId', 'fullName email phone'),
 
