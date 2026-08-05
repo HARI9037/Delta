@@ -78,12 +78,13 @@ class TeacherService {
    * Fetch teacher profile by ID
    */
   async getTeacherProfile(teacherId) {
-    const teacher = await Teacher.findById(teacherId);
+    const teacher = await Teacher.findById(teacherId).lean();
     if (!teacher) {
       const error = new Error('Teacher profile not found');
       error.statusCode = 404;
       throw error;
     }
+    teacher.name = teacher.fullName;
     return teacher;
   }
 
@@ -91,7 +92,7 @@ class TeacherService {
    * Update editable fields of teacher profile
    */
   async updateTeacherProfile(teacherId, updateData) {
-    const { phone, qualification, teachingExperience, teachingMode, profilePhoto, password } = updateData;
+    const { name, fullName, phone, qualification, teachingExperience, teachingMode, profilePhoto, password, bio, subjects } = updateData;
 
     const teacher = await Teacher.findById(teacherId);
     if (!teacher) {
@@ -100,17 +101,22 @@ class TeacherService {
       throw error;
     }
 
+    if (name !== undefined) teacher.fullName = name;
+    if (fullName !== undefined) teacher.fullName = fullName;
     if (phone !== undefined) teacher.phone = phone;
     if (qualification !== undefined) teacher.qualification = qualification;
     if (teachingExperience !== undefined) teacher.teachingExperience = teachingExperience;
     if (teachingMode !== undefined) teacher.teachingMode = teachingMode;
     if (profilePhoto !== undefined) teacher.profilePhoto = profilePhoto;
+    if (bio !== undefined) teacher.bio = bio;
+    if (subjects !== undefined) teacher.subjects = subjects;
     if (password) teacher.password = password; // Triggers pre-save password hash hook
 
     await teacher.save();
 
     const teacherObj = teacher.toObject();
     delete teacherObj.password;
+    teacherObj.name = teacherObj.fullName;
 
     return teacherObj;
   }
@@ -133,9 +139,7 @@ class TeacherService {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    // Day string e.g., 'Monday'
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const todayDay = days[today.getDay()];
+    const todayStr = today.toISOString().split('T')[0];
 
     const [todaysBookings, upcomingClasses, availability, assignedStudents, allBookings] = await Promise.all([
       Booking.find({
@@ -150,7 +154,7 @@ class TeacherService {
         status: 'Approved'
       }).sort({ date: 1, startTime: 1 }).limit(5).populate('studentId', 'name email phone'),
 
-      Availability.find({ teacherId, day: todayDay, enabled: true }).sort({ startTime: 1 }),
+      Availability.find({ teacherId, date: todayStr, enabled: true }).sort({ startTime: 1 }),
       
       this.getAssignedStudents(teacherId),
 
@@ -161,20 +165,28 @@ class TeacherService {
       })
     ]);
 
-    // Generate Timetable dynamically
-    const allAvailability = await Availability.find({ teacherId, enabled: true }).sort({ day: 1, startTime: 1 });
-    const timetable = allAvailability.map(slot => {
+    // Generate Timetable dynamically grouped by date
+    const allAvailability = await Availability.find({ teacherId, enabled: true, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
+    const timetable = {};
+    
+    allAvailability.forEach(slot => {
+      if (!timetable[slot.date]) {
+        timetable[slot.date] = [];
+      }
       const bookedSlots = allBookings.filter(b => b.availabilityId.toString() === slot._id.toString());
-      return {
+      timetable[slot.date].push({
         ...slot.toObject(),
+        isBooked: bookedSlots.length > 0,
         bookings: bookedSlots
-      };
+      });
     });
 
     return {
-      todaysBookings,
+      todaysClasses: todaysBookings,
       upcomingClasses,
       availability,
+      totalStudents: assignedStudents.length,
+      activeSlots: availability.length,
       assignedStudents,
       timetable
     };
@@ -204,17 +216,18 @@ class TeacherService {
    * Get all availability slots for a teacher
    */
   async getAvailability(teacherId) {
-    return await Availability.find({ teacherId }).sort({ day: 1, startTime: 1 });
+    const todayStr = new Date().toISOString().split('T')[0];
+    return await Availability.find({ teacherId, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
   }
 
   /**
    * Add a new availability slot
    */
   async addAvailability(teacherId, slotData) {
-    const { subject, day, startTime, endTime, mode, enabled } = slotData;
+    const { subject, date, startTime, endTime, mode, enabled } = slotData;
 
-    if (!subject || !day || !startTime || !endTime || !mode) {
-      const error = new Error('subject, day, startTime, endTime, and mode are required');
+    if (!subject || !date || !startTime || !endTime || !mode) {
+      const error = new Error('subject, date, startTime, endTime, and mode are required');
       error.statusCode = 400;
       throw error;
     }
@@ -225,11 +238,11 @@ class TeacherService {
       throw error;
     }
 
-    // Check for overlapping slots on the same day for this teacher
-    const existingSlots = await Availability.find({ teacherId, day });
+    // Check for overlapping slots on the same date for this teacher
+    const existingSlots = await Availability.find({ teacherId, date });
     for (const slot of existingSlots) {
       if (this._hasOverlap(startTime, endTime, slot.startTime, slot.endTime)) {
-        const error = new Error(`Time slot overlaps with existing slot (${slot.startTime} - ${slot.endTime}) on ${day}`);
+        const error = new Error(`Time slot overlaps with existing slot (${slot.startTime} - ${slot.endTime}) on ${date}`);
         error.statusCode = 400;
         throw error;
       }
@@ -238,7 +251,7 @@ class TeacherService {
     const newSlot = await Availability.create({
       teacherId,
       subject,
-      day,
+      date,
       startTime,
       endTime,
       mode,
@@ -266,7 +279,7 @@ class TeacherService {
     }
 
     const subject = updateData.subject || slot.subject;
-    const day = updateData.day || slot.day;
+    const date = updateData.date || slot.date;
     const startTime = updateData.startTime || slot.startTime;
     const endTime = updateData.endTime || slot.endTime;
     const mode = updateData.mode || slot.mode;
@@ -280,20 +293,20 @@ class TeacherService {
     // Check for overlapping slots excluding current slot
     const existingSlots = await Availability.find({
       teacherId,
-      day,
+      date,
       _id: { $ne: slotId },
     });
 
     for (const otherSlot of existingSlots) {
       if (this._hasOverlap(startTime, endTime, otherSlot.startTime, otherSlot.endTime)) {
-        const error = new Error(`Time slot overlaps with existing slot (${otherSlot.startTime} - ${otherSlot.endTime}) on ${day}`);
+        const error = new Error(`Time slot overlaps with existing slot (${otherSlot.startTime} - ${otherSlot.endTime}) on ${date}`);
         error.statusCode = 400;
         throw error;
       }
     }
 
     if (updateData.subject !== undefined) slot.subject = updateData.subject;
-    if (updateData.day !== undefined) slot.day = updateData.day;
+    if (updateData.date !== undefined) slot.date = updateData.date;
     if (updateData.startTime !== undefined) slot.startTime = updateData.startTime;
     if (updateData.endTime !== undefined) slot.endTime = updateData.endTime;
     if (updateData.mode !== undefined) slot.mode = updateData.mode;
@@ -301,6 +314,18 @@ class TeacherService {
 
     await slot.save();
     return slot;
+  }
+
+
+  /**
+   * Get all bookings for the teacher (with optional status filter)
+   */
+  async getBookings(teacherId, status) {
+    const query = { teacherId };
+    if (status) query.status = status;
+    return await Booking.find(query)
+      .sort({ createdAt: -1 })
+      .populate('studentId', 'name email phone');
   }
 
   /**

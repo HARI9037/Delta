@@ -133,6 +133,22 @@ class TeacherController {
     }
   }
 
+  async getBookings(req, res) {
+    try {
+      const bookings = await teacherService.getBookings(req.user._id, req.query.status);
+      return responseHelper.success(res, 200, 'Bookings fetched successfully', bookings);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to fetch bookings',
+        error.message
+      );
+    }
+  }
+
+
+
   async getDashboard(req, res) {
     try {
       const dashboardData = await teacherService.getDashboard(req.user._id);

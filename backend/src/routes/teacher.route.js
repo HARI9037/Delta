@@ -20,6 +20,10 @@ router.post('/availability', authenticateTeacher, (req, res) => teacherControlle
 router.put('/availability/:id', authenticateTeacher, (req, res) => teacherController.updateAvailability(req, res));
 router.delete('/availability/:id', authenticateTeacher, (req, res) => teacherController.deleteAvailability(req, res));
 
+// Protected Booking routes (teacher manages student bookings)
+router.get('/bookings', authenticateTeacher, (req, res) => teacherController.getBookings(req, res));
+
+
 // Protected Dashboard route
 router.get('/dashboard', authenticateTeacher, (req, res) => teacherController.getDashboard(req, res));
 

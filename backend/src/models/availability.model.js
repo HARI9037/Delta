@@ -13,10 +13,10 @@ const availabilitySchema = new mongoose.Schema(
       required: [true, 'Subject is required'],
       trim: true,
     },
-    day: {
+    date: {
       type: String,
-      required: [true, 'Day is required'],
-      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      required: [true, 'Date is required'],
+      // Format expected: "YYYY-MM-DD"
     },
     startTime: {
       type: String,

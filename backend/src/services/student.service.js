@@ -77,12 +77,13 @@ class StudentService {
    * Fetch student profile by ID
    */
   async getStudentProfile(studentId) {
-    const student = await Student.findById(studentId);
+    const student = await Student.findById(studentId).lean();
     if (!student) {
       const error = new Error('Student profile not found');
       error.statusCode = 444;
       throw error;
     }
+    student.grade = student.class;
     return student;
   }
 
@@ -90,11 +91,7 @@ class StudentService {
    * Update editable fields of student profile
    */
   async updateStudentProfile(studentId, updateData) {
-    const { phone, password, profilePhoto } = updateData;
-    const allowedUpdates = {};
-
-    if (phone !== undefined) allowedUpdates.phone = phone;
-    if (profilePhoto !== undefined) allowedUpdates.profilePhoto = profilePhoto;
+    const { name, phone, password, profilePhoto, grade } = updateData;
 
     const student = await Student.findById(studentId);
     if (!student) {
@@ -103,14 +100,18 @@ class StudentService {
       throw error;
     }
 
+    if (name !== undefined) student.name = name;
     if (phone !== undefined) student.phone = phone;
     if (profilePhoto !== undefined) student.profilePhoto = profilePhoto;
+    if (grade !== undefined) student.class = grade;
+    if (updateData.class !== undefined) student.class = updateData.class;
     if (password) student.password = password; // Will trigger pre-save password hash hook
 
     await student.save();
 
     const studentObj = student.toObject();
     delete studentObj.password;
+    studentObj.grade = studentObj.class;
 
     return studentObj;
   }
@@ -129,7 +130,7 @@ class StudentService {
     const teachers = await Teacher.find(query).select('-password').lean();
     
     const teacherIds = teachers.map(t => t._id);
-    const availabilities = await Availability.find({ teacherId: { $in: teacherIds }, enabled: true }).sort({ day: 1, startTime: 1 }).lean();
+    const availabilities = await Availability.find({ teacherId: { $in: teacherIds }, enabled: true }).sort({ date: 1, startTime: 1 }).lean();
     
     return teachers.map(teacher => ({
       ...teacher,
@@ -148,7 +149,7 @@ class StudentService {
       error.statusCode = 404;
       throw error;
     }
-    const availability = await Availability.find({ teacherId, enabled: true }).sort({ day: 1, startTime: 1 });
+    const availability = await Availability.find({ teacherId, enabled: true }).sort({ date: 1, startTime: 1 });
     return { teacher, availability };
   }
 
@@ -156,9 +157,9 @@ class StudentService {
    * Book a slot
    */
   async bookSlot(studentId, bookingData) {
-    const { teacherId, availabilityId, subject, day, date, startTime, endTime, mode, requirement } = bookingData;
+    const { teacherId, availabilityId, subject, startTime, endTime, mode, requirement } = bookingData;
 
-    if (!teacherId || !availabilityId || !subject || !day || !date || !startTime || !endTime || !mode) {
+    if (!teacherId || !availabilityId || !subject || !startTime || !endTime || !mode) {
       const error = new Error('Missing required booking fields');
       error.statusCode = 400;
       throw error;
@@ -172,28 +173,12 @@ class StudentService {
       throw error;
     }
 
-    // Check if slot is already booked for this specific date
-    const existingBooking = await Booking.findOne({
-      teacherId,
-      date: new Date(date),
-      startTime,
-      endTime,
-      status: { $in: ['Pending', 'Approved'] }
-    });
-
-    if (existingBooking) {
-      const error = new Error('This slot is already booked for the selected date');
-      error.statusCode = 400;
-      throw error;
-    }
-
     const booking = await Booking.create({
       studentId,
       teacherId,
       availabilityId,
       subject,
-      day,
-      date: new Date(date),
+      date: availability.date,
       startTime,
       endTime,
       mode,
@@ -212,6 +197,8 @@ class StudentService {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
     const currentMonth = today.toLocaleString('default', { month: 'long' });
     const currentYear = today.getFullYear().toString();
@@ -219,13 +206,13 @@ class StudentService {
     const [todaysClasses, upcomingClasses, bookingHistory, currentMonthPayment] = await Promise.all([
       Booking.find({
         studentId,
-        date: { $gte: today, $lt: tomorrow },
+        date: todayStr,
         status: 'Approved'
       }).populate('teacherId', 'fullName email phone'),
 
       Booking.find({
         studentId,
-        date: { $gte: tomorrow },
+        date: { $gte: tomorrowStr },
         status: 'Approved'
       }).sort({ date: 1, startTime: 1 }).limit(5).populate('teacherId', 'fullName email phone'),
 

@@ -19,12 +19,9 @@ const bookingSchema = new mongoose.Schema(
       required: [true, 'Subject is required'],
       trim: true,
     },
-    day: {
-      type: String,
-      required: [true, 'Day is required'],
-    },
+
     date: {
-      type: Date,
+      type: String,
       required: [true, 'Date is required'],
     },
     startTime: {
@@ -48,7 +45,12 @@ const bookingSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['Pending', 'Approved', 'Cancelled', 'Completed'],
-      default: 'Pending',
+      default: 'Approved',
+    },
+    teacherId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Teacher',
+      index: true,
     },
   },
   {
