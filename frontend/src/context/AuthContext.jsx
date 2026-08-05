@@ -14,8 +14,12 @@ export function AuthProvider({ children }) {
 
   // Save login data: { token, name, email, role }
   function login(userData) {
-    localStorage.setItem('tms_user', JSON.stringify(userData))
-    setUser(userData)
+    const normalized = {
+      ...userData,
+      name: userData.name || userData.fullName || '',
+    }
+    localStorage.setItem('tms_user', JSON.stringify(normalized))
+    setUser(normalized)
   }
 
   function logout() {

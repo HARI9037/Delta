@@ -11,7 +11,7 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const slots = (teacher.availability || []).filter((s) => s.enabled !== false)
+  const slots = (teacher.availability || []).filter((s) => s.enabled !== false && !s.isBooked)
 
   async function handleBook() {
     if (!selectedSlot) return setError('Please select a time slot')
@@ -80,6 +80,11 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
                         <div>
                           <div className="fw-semibold" style={{ fontSize: '0.85rem' }}>{slot.subject}</div>
                           <div className="text-muted" style={{ fontSize: '0.75rem' }}>{new Date(slot.date).toLocaleDateString()} · {slot.startTime} – {slot.endTime}</div>
+                          {(slot.bookedCount || 0) > 0 && (
+                            <div className="text-muted" style={{ fontSize: '0.72rem' }}>
+                              {slot.bookedCount}/{slot.minStudents || 4} seats filled
+                            </div>
+                          )}
                         </div>
                         <span className={`badge ${slot.mode === 'Online' ? 'bg-success' : 'bg-warning'}`}>
                           {slot.mode}
