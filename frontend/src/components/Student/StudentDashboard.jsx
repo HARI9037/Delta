@@ -87,10 +87,19 @@ export default function StudentDashboard() {
                 <ul className="list-group list-group-flush">
                   {todaysClasses.map((c) => (
                     <li key={c._id} className="list-group-item d-flex justify-content-between align-items-center">
-                      <div>
-                        <div className="fw-semibold small">{c.subject}</div>
-                        <div className="text-muted" style={{ fontSize: '0.78rem' }}>
-                          {c.startTime} – {c.endTime} · {c.teacherId?.fullName}
+                      <div className="d-flex align-items-center gap-2">
+                        {c.teacherId?.profilePhoto ? (
+                          <img src={c.teacherId.profilePhoto} alt={c.teacherId.fullName} className="rounded-circle object-fit-cover flex-shrink-0" style={{ width: 30, height: 30 }} />
+                        ) : (
+                          <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 30, height: 30, fontSize: '0.8rem' }}>
+                            <i className="bi bi-person-fill"></i>
+                          </div>
+                        )}
+                        <div>
+                          <div className="fw-semibold small">{c.subject}</div>
+                          <div className="text-muted" style={{ fontSize: '0.78rem' }}>
+                            {c.startTime} – {c.endTime} · {c.teacherId?.fullName}
+                          </div>
                         </div>
                       </div>
                       <span

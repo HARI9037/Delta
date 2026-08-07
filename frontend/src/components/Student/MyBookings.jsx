@@ -60,8 +60,19 @@ export default function MyBookings() {
                   bookings.map((b) => (
                     <tr key={b._id}>
                       <td className="px-3 py-3">
-                        <div className="fw-semibold small">{b.subject}</div>
-                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>{b.teacherId?.fullName}</div>
+                        <div className="d-flex align-items-center gap-2">
+                          {b.teacherId?.profilePhoto ? (
+                            <img src={b.teacherId.profilePhoto} alt={b.teacherId.fullName} className="rounded-circle object-fit-cover flex-shrink-0" style={{ width: 30, height: 30 }} />
+                          ) : (
+                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 30, height: 30, fontSize: '0.8rem' }}>
+                              <i className="bi bi-person-fill"></i>
+                            </div>
+                          )}
+                          <div>
+                            <div className="fw-semibold small">{b.subject}</div>
+                            <div className="text-muted" style={{ fontSize: '0.75rem' }}>{b.teacherId?.fullName}</div>
+                          </div>
+                        </div>
                       </td>
                       <td>
                         <div className="small">{new Date(b.date).toLocaleDateString()}</div>
