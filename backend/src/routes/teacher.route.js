@@ -30,6 +30,9 @@ router.post('/profile/photo', authenticateTeacher, (req, res, next) => {
 // Protected Assigned Students route
 router.get('/students', authenticateTeacher, (req, res) => teacherController.getAssignedStudents(req, res));
 
+// Notify an assigned student (e.g. to add their correct grade/class)
+router.post('/students/:id/notify', authenticateTeacher, (req, res) => teacherController.notifyStudent(req, res));
+
 // Protected Availability routes
 router.get('/availability', authenticateTeacher, (req, res) => teacherController.getAvailability(req, res));
 router.post('/availability', authenticateTeacher, (req, res) => teacherController.addAvailability(req, res));

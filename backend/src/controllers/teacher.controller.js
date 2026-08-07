@@ -87,6 +87,20 @@ class TeacherController {
     }
   }
 
+  async notifyStudent(req, res) {
+    try {
+      const notification = await teacherService.notifyStudent(req.user._id, req.params.id, req.body.message);
+      return responseHelper.success(res, 201, 'Notification sent to student', notification);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to send notification',
+        error.message
+      );
+    }
+  }
+
   async getAvailability(req, res) {
     try {
       const availability = await teacherService.getAvailability(req.user._id);

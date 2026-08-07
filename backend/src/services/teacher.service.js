@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import Teacher from '../models/teacher.model.js';
 import Availability from '../models/availability.model.js';
 import Booking from '../models/booking.model.js';
+import Notification from '../models/notification.model.js';
 // Student model import for future query integration
 import Student from '../models/student.model.js';
 
@@ -169,6 +170,39 @@ class TeacherService {
     const bookings = await Booking.find({ teacherId, status: 'Approved' }).distinct('studentId');
     const students = await Student.find({ _id: { $in: bookings } }).select('-password').lean();
     return students.map((s) => ({ ...s, grade: s.class }));
+  }
+
+  /**
+   * Send a notification to a student (e.g. asking them to add their correct grade/class)
+   */
+  async notifyStudent(teacherId, studentId, message) {
+    if (!studentId) {
+      const error = new Error('Student ID is required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      const error = new Error('Student not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const booking = await Booking.findOne({ teacherId, studentId, status: 'Approved' });
+    if (!booking) {
+      const error = new Error('You can only notify students who are assigned to your classes');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const notification = await Notification.create({
+      studentId,
+      teacherId,
+      message: message || 'Please add your correct class or grade in your profile so we can match you with the right teacher.',
+    });
+
+    return notification;
   }
 
   /**

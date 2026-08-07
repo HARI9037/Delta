@@ -4,6 +4,7 @@ import Teacher from '../models/teacher.model.js';
 import Availability, { MIN_STUDENTS_PER_SLOT } from '../models/availability.model.js';
 import Booking from '../models/booking.model.js';
 import Payment from '../models/payment.model.js';
+import Notification from '../models/notification.model.js';
 
 // Local timezone date as "YYYY-MM-DD" (matches date strings from <input type="date">)
 function localDateStr(date = new Date()) {
@@ -307,6 +308,24 @@ class StudentService {
     }
 
     return booking;
+  }
+
+  /**
+   * Get notifications for the student
+   */
+  async getNotifications(studentId) {
+    return await Notification.find({ studentId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .populate('teacherId', 'fullName');
+  }
+
+  /**
+   * Mark all student notifications as read
+   */
+  async markNotificationsRead(studentId) {
+    await Notification.updateMany({ studentId, read: false }, { read: true });
+    return { updated: true };
   }
 
   /**
