@@ -32,4 +32,8 @@ router.get('/teachers/:id', authenticateStudent, (req, res) => studentController
 router.post('/bookings', authenticateStudent, (req, res) => studentController.bookSlot(req, res));
 router.get('/dashboard', authenticateStudent, (req, res) => studentController.getDashboard(req, res));
 
+// Notifications (from teachers, e.g. requests to add grade/class)
+router.get('/notifications', authenticateStudent, (req, res) => studentController.getNotifications(req, res));
+router.put('/notifications/read', authenticateStudent, (req, res) => studentController.markNotificationsRead(req, res));
+
 export default router;

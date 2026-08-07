@@ -128,6 +128,34 @@ class StudentController {
       );
     }
   }
+
+  async getNotifications(req, res) {
+    try {
+      const notifications = await studentService.getNotifications(req.user._id);
+      return responseHelper.success(res, 200, 'Notifications fetched successfully', notifications);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to fetch notifications',
+        error.message
+      );
+    }
+  }
+
+  async markNotificationsRead(req, res) {
+    try {
+      const result = await studentService.markNotificationsRead(req.user._id);
+      return responseHelper.success(res, 200, 'Notifications marked as read', result);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to update notifications',
+        error.message
+      );
+    }
+  }
 }
 
 export default new StudentController();
