@@ -136,6 +136,33 @@ class TeacherService {
   }
 
   /**
+   * Persist an uploaded profile photo for a teacher
+   */
+  async uploadProfilePhoto(teacherId, file) {
+    if (!file) {
+      const error = new Error('No photo file provided');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) {
+      const error = new Error('Teacher profile not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    teacher.profilePhoto = `/api/uploads/${file.filename}`;
+    await teacher.save();
+
+    const teacherObj = teacher.toObject();
+    delete teacherObj.password;
+    teacherObj.name = teacherObj.fullName;
+
+    return teacherObj;
+  }
+
+  /**
    * Fetch assigned students for the teacher
    */
   async getAssignedStudents(teacherId) {

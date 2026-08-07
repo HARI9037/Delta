@@ -3,6 +3,7 @@ import cors from 'cors';
 import studentRoutes from './routes/student.route.js';
 import teacherRoutes from './routes/teacher.route.js';
 import responseHelper from './utils/response.js';
+import { uploadDir } from './middlewares/upload.middleware.js';
 
 import paymentRoutes from './routes/payment.route.js';
 
@@ -12,6 +13,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded profile photos (dev: forwarded by Vite /api proxy)
+app.use('/api/uploads', express.static(uploadDir));
 
 // Routes
 app.use('/api/user', studentRoutes);
