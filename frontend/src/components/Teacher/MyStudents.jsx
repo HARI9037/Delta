@@ -48,13 +48,17 @@ export default function MyStudents() {
                     <tr key={st._id}>
                       <td className="px-3 py-3">
                         <div className="d-flex align-items-center gap-3">
-                          <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }}>
-                            <i className="bi bi-person"></i>
-                          </div>
+                          {st.profilePhoto ? (
+                            <img src={st.profilePhoto} alt={st.name} className="rounded-circle object-fit-cover flex-shrink-0" style={{ width: 40, height: 40 }} />
+                          ) : (
+                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 40, height: 40 }}>
+                              <i className="bi bi-person"></i>
+                            </div>
+                          )}
                           <div className="fw-semibold small">{st.name}</div>
                         </div>
                       </td>
-                      <td className="small">{st.grade || '-'}</td>
+                      <td className="small">{st.grade || 'N/A'}</td>
                       <td>
                         <div className="small">{st.email}</div>
                         <div className="text-muted" style={{ fontSize: '0.75rem' }}>{st.phone}</div>
