@@ -99,9 +99,9 @@ When a student books a teacher but has **no class/grade** set, the teacher can s
 
 ### Flow
 - In the teacher's **My Students** table:
-  - Students with no grade show a warning **"No Grade"** badge (instead of plain `N/A`).
+  - Students with no grade show a **"No Grade"** badge (instead of plain `N/A`).
   - Those students get a **"Report Grade"** button in a new Action column (button only shows for no-grade students).
-- Clicking it opens a modal pre-filled with: *"Please add your correct class or grade in your profile so we can match you with the right teacher."* The teacher can edit the message before sending.
+- Clicking it opens a modal where the teacher writes a message to the student.
 - The student sees the message in a **Notifications** card on their dashboard (unread items highlighted, "Mark all read" button).
 
 ### Backend changes
@@ -118,7 +118,7 @@ When a student books a teacher but has **no class/grade** set, the teacher can s
 ### Frontend changes
 | File | Change |
 | --- | --- |
-| `frontend/src/components/Teacher/MyStudents.jsx` | "No Grade" warning badge + "Report Grade" button (no-grade students only) + report modal. |
+| `frontend/src/components/Teacher/MyStudents.jsx` | "No Grade" danger badge + "Report Grade" button (no-grade students only) + report modal. |
 | `frontend/src/services/teacherService.js` | Added `notifyStudent(studentId, message)`. |
 | `frontend/src/components/Student/StudentDashboard.jsx` | Added a **Notifications** card with unread highlight and "Mark all read". |
 | `frontend/src/services/studentService.js` | Added `getNotifications()` and `markNotificationsRead()`. |
@@ -127,7 +127,25 @@ When a student books a teacher but has **no class/grade** set, the teacher can s
 
 ---
 
-## 5. Dependency / Security Fix
+## 5b. Report Grade Modal — UI Refinements (today)
+
+Final state of the report modal and its styling after today's tweaks:
+
+- **Colors changed from yellow to red** for better visibility:
+  - "No Grade" badge → `bg-danger bg-opacity-10 text-danger`.
+  - "Report Grade" button → `btn-outline-danger`.
+  - Modal header → solid `bg-danger` with white text.
+- **"Message to student" is now required** (marked with a red `*`):
+  - Empty message disables the **Send** button.
+  - A placeholder guides the teacher: *"Type a message asking them to add their class or grade."*
+  - The old automatic fallback text is removed — the teacher must type their own message (frontend-only; no backend change).
+- **Removed the helper comment** that used to appear above the message box (e.g. *"{student.name} does not have a class/grade set..."*). The modal now shows only the "Message to student" label + textarea.
+
+All of the above are in `frontend/src/components/Teacher/MyStudents.jsx` only.
+
+---
+
+## 6. Dependency / Security Fix
 
 - `npm audit fix` was run on the backend, which resolved a **high-severity `brace-expansion`** vulnerability.
 
@@ -141,5 +159,6 @@ When a student books a teacher but has **no class/grade** set, the teacher can s
 - [ ] Student: Dashboard & My Bookings show teacher photos.
 - [ ] Teacher: My Students shows each student's photo; grade shows "N/A" when not set.
 - [ ] Oversized (>2 MB) or non-image files are rejected with a clean error message.
-- [ ] Teacher: My Students shows a "No Grade" badge + "Report Grade" button only for students without a grade; sending shows a success message.
+- [ ] Teacher: My Students shows a "No Grade" badge (red) + "Report Grade" button only for students without a grade.
+- [ ] Report Grade modal: Send button is disabled when the message box is empty; no helper comment text is shown.
 - [ ] Student: dashboard Notifications card shows the teacher's message; "Mark all read" clears the unread highlight.
