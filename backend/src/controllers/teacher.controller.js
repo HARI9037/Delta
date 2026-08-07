@@ -73,6 +73,20 @@ class TeacherController {
     }
   }
 
+  async uploadProfilePhoto(req, res) {
+    try {
+      const teacher = await teacherService.uploadProfilePhoto(req.user._id, req.file);
+      return responseHelper.success(res, 200, 'Profile photo uploaded successfully', teacher);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to upload profile photo',
+        error.message
+      );
+    }
+  }
+
   async getAvailability(req, res) {
     try {
       const availability = await teacherService.getAvailability(req.user._id);

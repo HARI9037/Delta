@@ -140,6 +140,33 @@ class StudentService {
   }
 
   /**
+   * Persist an uploaded profile photo for a student
+   */
+  async uploadProfilePhoto(studentId, file) {
+    if (!file) {
+      const error = new Error('No photo file provided');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      const error = new Error('Student profile not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    student.profilePhoto = `/api/uploads/${file.filename}`;
+    await student.save();
+
+    const studentObj = student.toObject();
+    delete studentObj.password;
+    studentObj.grade = studentObj.class;
+
+    return studentObj;
+  }
+
+  /**
    * Get all teachers with optional filters
    */
   async getAllTeachers(studentId, filters = {}) {
@@ -301,17 +328,17 @@ class StudentService {
         studentId,
         date: todayStr,
         status: 'Approved'
-      }).populate('teacherId', 'fullName email phone'),
+      }).populate('teacherId', 'fullName email phone profilePhoto'),
 
       Booking.find({
         studentId,
         date: { $gte: tomorrowStr },
         status: 'Approved'
-      }).sort({ date: 1, startTime: 1 }).limit(5).populate('teacherId', 'fullName email phone'),
+      }).sort({ date: 1, startTime: 1 }).limit(5).populate('teacherId', 'fullName email phone profilePhoto'),
 
       Booking.find({
         studentId,
-      }).sort({ createdAt: -1 }).limit(10).populate('teacherId', 'fullName'),
+      }).sort({ createdAt: -1 }).limit(10).populate('teacherId', 'fullName profilePhoto'),
 
       Payment.findOne({ studentId, month: currentMonth, year: currentYear })
     ]);

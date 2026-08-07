@@ -59,6 +59,20 @@ class StudentController {
     }
   }
 
+  async uploadProfilePhoto(req, res) {
+    try {
+      const student = await studentService.uploadProfilePhoto(req.user._id, req.file);
+      return responseHelper.success(res, 200, 'Profile photo updated successfully', student);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to upload profile photo',
+        error.message
+      );
+    }
+  }
+
   async getAllTeachers(req, res) {
     try {
       const teachers = await studentService.getAllTeachers(req.user._id, req.query);
