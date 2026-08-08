@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getStudentDashboard, getNotifications, markNotificationsRead } from '../../services/studentService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
+import AnnouncementSection from '../Common/AnnouncementSection'
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null)
@@ -46,6 +47,9 @@ export default function StudentDashboard() {
       <p className="page-title">Dashboard</p>
       <p className="page-subtitle">Welcome back! Here is your learning overview.</p>
 
+      {/* Announcements Broadcast Feed */}
+      <AnnouncementSection />
+
       {/* Stat cards */}
       <div className="row g-3 mb-4">
         <div className="col-sm-6 col-xl-3">
@@ -86,7 +90,7 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      <div className="row g-3">
+      <div className="row g-3 mb-4">
         {/* Today's Classes */}
         <div className="col-lg-6">
           <div className="card h-100">

@@ -6,6 +6,8 @@ import responseHelper from './utils/response.js';
 import { uploadDir } from './middlewares/upload.middleware.js';
 
 import paymentRoutes from './routes/payment.route.js';
+import adminRoutes from './routes/admin.route.js';
+import announcementRoutes from './routes/announcement.route.js';
 
 const app = express();
 
@@ -21,6 +23,8 @@ app.use('/api/uploads', express.static(uploadDir));
 app.use('/api/user', studentRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

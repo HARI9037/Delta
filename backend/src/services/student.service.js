@@ -295,7 +295,7 @@ class StudentService {
       endTime,
       mode,
       requirement,
-      status: 'Approved'
+      status: 'Pending'
     });
 
     // Automatically close the slot once the minimum number of students is reached
