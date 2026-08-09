@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getAllTeachers, bookSlot } from '../../services/studentService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
+import Avatar from '../Common/Avatar'
 
 const MODES = ['Any', 'Online', 'Offline']
 
@@ -46,21 +47,7 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
           </div>
           <div className="modal-body p-4">
             <div className="d-flex align-items-center gap-3 mb-4 bg-light p-3 rounded">
-              {teacher.profilePhoto ? (
-                <img
-                  src={teacher.profilePhoto}
-                  alt={teacher.name}
-                  className="rounded-circle object-fit-cover flex-shrink-0"
-                  style={{ width: 44, height: 44 }}
-                />
-              ) : (
-                <div
-                  className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                  style={{ width: 44, height: 44, background: 'var(--primary)', color: '#fff' }}
-                >
-                  <i className="bi bi-person-fill"></i>
-                </div>
-              )}
+              <Avatar src={teacher.profilePhoto} name={teacher.name} size={44} />
               <div>
                 <div className="fw-semibold">{teacher.name}</div>
                 <div className="text-muted small">{(teacher.subjects || []).join(', ')}</div>
@@ -210,13 +197,7 @@ export default function FindTeachers() {
             <div className="card h-100">
               <div className="card-body">
                 <div className="d-flex align-items-center gap-3 mb-3">
-                  {teacher.profilePhoto ? (
-                    <img src={teacher.profilePhoto} alt={teacher.name} className="rounded-circle object-fit-cover flex-shrink-0" style={{ width: 48, height: 48 }} />
-                  ) : (
-                    <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 48, height: 48, fontSize: '1.2rem' }}>
-                      <i className="bi bi-person-fill"></i>
-                    </div>
-                  )}
+                  <Avatar src={teacher.profilePhoto} name={teacher.name} size={48} />
                   <div className="overflow-hidden">
                     <div className="fw-semibold text-truncate">{teacher.name}</div>
                   </div>

@@ -1,7 +1,10 @@
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import Avatar from '../Common/Avatar'
 
 export default function Navbar({ title, onMenuToggle }) {
   const { user } = useAuth()
+  const profileLink = user?.role === 'admin' ? '/admin/profile' : user?.role === 'teacher' ? '/teacher/profile' : '/student/profile'
 
   return (
     <div className="top-navbar">
@@ -20,11 +23,17 @@ export default function Navbar({ title, onMenuToggle }) {
       </span>
 
       {/* User info */}
-      <div className="d-flex align-items-center gap-2">
-        <span className="d-none d-md-inline text-muted small">
+      <Link
+        to={profileLink}
+        className="d-flex align-items-center gap-2 text-decoration-none"
+        title="View Profile"
+      >
+        <Avatar src={user?.profilePhoto} name={user?.name} size={32} />
+        <span className="d-none d-md-inline text-dark small fw-medium">
           {user?.name}
         </span>
-      </div>
+      </Link>
     </div>
   )
 }
+

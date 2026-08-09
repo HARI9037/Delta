@@ -24,6 +24,7 @@ const titles = {
   '/admin/booking-confirmations':'Booking Confirmations',
   '/admin/bookings':             'All Bookings',
   '/admin/announcements':        'Announcements',
+  '/admin/profile':              'Admin Profile',
 }
 
 export default function DashboardLayout() {

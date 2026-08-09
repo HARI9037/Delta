@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getRegistrations, updateRegistrationStatus } from '../../services/adminService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
+import Avatar from '../Common/Avatar'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -29,16 +30,7 @@ function RequestDetailModal({ request, onClose, onAction, acting }) {
             style={{ background: 'linear-gradient(135deg, #0B174E 0%, #25233F 100%)' }}
           >
             <div className="d-flex align-items-center gap-3">
-              <div
-                className="rounded-circle bg-white text-dark fw-bold d-flex align-items-center justify-content-center shadow-sm"
-                style={{ width: 56, height: 56, fontSize: '1.2rem', overflow: 'hidden' }}
-              >
-                {request.profilePhoto ? (
-                  <img src={request.profilePhoto} alt={request.name} className="w-100 h-100" style={{ objectFit: 'cover' }} />
-                ) : (
-                  request.name?.substring(0, 2).toUpperCase()
-                )}
-              </div>
+              <Avatar src={request.profilePhoto} name={request.name} size={56} />
               <div>
                 <h5 className="fw-bold mb-0 text-white">{request.name}</h5>
                 <div className="d-flex align-items-center gap-2 mt-1">
@@ -349,16 +341,7 @@ export default function ApproveRegistrations() {
                       onClick={() => setSelectedRequest(req)}
                       title="Click to view full details"
                     >
-                      <div
-                        className="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center shadow-sm"
-                        style={{ width: 52, height: 52, fontSize: '1.1rem', flexShrink: 0, overflow: 'hidden' }}
-                      >
-                        {req.profilePhoto ? (
-                          <img src={req.profilePhoto} alt={req.name} className="w-100 h-100" style={{ objectFit: 'cover' }} />
-                        ) : (
-                          req.name?.substring(0, 2).toUpperCase()
-                        )}
-                      </div>
+                      <Avatar src={req.profilePhoto} name={req.name} size={52} />
 
                       <div>
                         <div className="d-flex align-items-center gap-2 flex-wrap">

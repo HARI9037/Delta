@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getAllTeachers, getTeacherDetails } from '../../services/adminService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
+import Avatar from '../Common/Avatar'
 
 function TeacherDetailModal({ teacherId, onClose }) {
   const [data, setData] = useState(null)
@@ -34,13 +35,7 @@ function TeacherDetailModal({ teacherId, onClose }) {
               <div>
                 {/* Header Card */}
                 <div className="d-flex align-items-center gap-3 p-3 mb-4 rounded-3" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div className="rounded-circle bg-warning text-dark fw-bold d-flex align-items-center justify-content-center" style={{ width: 60, height: 60, fontSize: '1.3rem' }}>
-                    {data.teacher.profilePhoto ? (
-                      <img src={data.teacher.profilePhoto} alt={data.teacher.name} className="w-100 h-100 rounded-circle" style={{ objectFit: 'cover' }} />
-                    ) : (
-                      data.teacher.name?.substring(0, 2).toUpperCase()
-                    )}
-                  </div>
+                  <Avatar src={data.teacher.profilePhoto} name={data.teacher.name} size={60} />
                   <div>
                     <h5 className="fw-bold mb-1">{data.teacher.name}</h5>
                     <div className="text-muted small">
@@ -231,16 +226,10 @@ export default function AllTeachers() {
                   ) : (
                     teachers.map((t) => (
                       <tr key={t._id}>
-                        <td className="px-3">
-                          <div className="d-flex align-items-center gap-2">
-                            <div className="rounded-circle bg-warning text-dark fw-bold d-flex align-items-center justify-content-center" style={{ width: 34, height: 34, fontSize: '0.8rem' }}>
-                              {t.profilePhoto ? (
-                                <img src={t.profilePhoto} alt={t.name} className="w-100 h-100 rounded-circle" style={{ objectFit: 'cover' }} />
-                              ) : (
-                                t.name?.substring(0, 2).toUpperCase()
-                              )}
-                            </div>
-                            <span className="fw-semibold small">{t.name}</span>
+                        <td className="px-3" style={{ maxWidth: 220 }}>
+                          <div className="d-flex align-items-center gap-2 overflow-hidden">
+                            <Avatar src={t.profilePhoto} name={t.name} size={34} />
+                            <span className="fw-semibold small text-truncate" title={t.name}>{t.name}</span>
                           </div>
                         </td>
                         <td className="small text-muted">{t.email}</td>

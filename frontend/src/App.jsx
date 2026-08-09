@@ -33,6 +33,7 @@ import AllTeachers from './components/Admin/AllTeachers'
 import BookingConfirmations from './components/Admin/BookingConfirmations'
 import AllBookings from './components/Admin/AllBookings'
 import ManageAnnouncements from './components/Admin/ManageAnnouncements'
+import AdminProfile from './components/Admin/AdminProfile'
 
 export default function App() {
   return (
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="booking-confirmations" element={<BookingConfirmations />} />
           <Route path="bookings" element={<AllBookings />} />
           <Route path="announcements" element={<ManageAnnouncements />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

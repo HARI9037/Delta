@@ -4,6 +4,7 @@ import { getAdminDashboard, updateRegistrationStatus } from '../../services/admi
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
 import AnnouncementSection from '../Common/AnnouncementSection'
+import Avatar from '../Common/Avatar'
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null)
@@ -154,16 +155,7 @@ export default function AdminDashboard() {
                       style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}
                     >
                       <div className="d-flex align-items-center gap-3">
-                        <div
-                          className="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center"
-                          style={{ width: 40, height: 40, fontSize: '0.9rem', flexShrink: 0 }}
-                        >
-                          {req.profilePhoto ? (
-                            <img src={req.profilePhoto} alt={req.name} className="w-100 h-100 rounded-circle" style={{ objectFit: 'cover' }} />
-                          ) : (
-                            req.name?.substring(0, 2).toUpperCase()
-                          )}
-                        </div>
+                        <Avatar src={req.profilePhoto} name={req.name} size={40} />
                         <div>
                           <div className="fw-semibold text-dark small mb-0">{req.name}</div>
                           <div className="text-muted" style={{ fontSize: '0.74rem' }}>

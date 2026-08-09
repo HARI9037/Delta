@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getNotifications, markNotificationsRead } from '../../services/studentService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
+import Avatar from '../Common/Avatar'
 
 export default function Inbox() {
   const [notifications, setNotifications] = useState([])
@@ -58,13 +59,7 @@ export default function Inbox() {
               {notifications.map((n) => (
                 <li key={n._id} className={`list-group-item d-flex justify-content-between align-items-start gap-2 p-3 ${!n.read ? 'bg-warning bg-opacity-10' : ''}`}>
                   <div className="d-flex gap-2">
-                    {n.teacherId?.profilePhoto ? (
-                      <img src={n.teacherId.profilePhoto} alt={n.teacherId.fullName} className="rounded-circle object-fit-cover flex-shrink-0" style={{ width: 36, height: 36 }} />
-                    ) : (
-                      <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 36, height: 36 }}>
-                        <i className="bi bi-person-fill"></i>
-                      </div>
-                    )}
+                    <Avatar src={n.teacherId?.profilePhoto} name={n.teacherId?.fullName} size={36} />
                     <div>
                       <div className="fw-semibold small">{n.teacherId?.fullName || 'Teacher'}</div>
                       <div className="small">{n.message}</div>
