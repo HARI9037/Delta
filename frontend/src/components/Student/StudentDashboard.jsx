@@ -177,11 +177,14 @@ export default function StudentDashboard() {
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span><i className="bi bi-bell me-2 text-primary"></i>Notifications</span>
-              {notifications.some((n) => !n.read) && (
-                <button className="btn btn-outline-primary btn-sm" style={{ fontSize: '0.75rem' }} onClick={handleMarkRead}>
-                  Mark all read
-                </button>
-              )}
+              <div className="d-flex align-items-center gap-2">
+                {notifications.some((n) => !n.read) && (
+                  <button className="btn btn-outline-primary btn-sm" style={{ fontSize: '0.75rem' }} onClick={handleMarkRead}>
+                    Mark all read
+                  </button>
+                )}
+                <Link to="/student/inbox" className="btn btn-outline-primary btn-sm" style={{ fontSize: '0.75rem' }}>View All</Link>
+              </div>
             </div>
             <div className="card-body p-0">
               {notifications.length === 0 ? (

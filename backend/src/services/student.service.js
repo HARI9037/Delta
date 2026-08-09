@@ -317,7 +317,7 @@ class StudentService {
     return await Notification.find({ studentId })
       .sort({ createdAt: -1 })
       .limit(20)
-      .populate('teacherId', 'fullName');
+      .populate('teacherId', 'fullName profilePhoto');
   }
 
   /**

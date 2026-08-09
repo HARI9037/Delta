@@ -6,6 +6,7 @@ const studentLinks = [
   { to: '/student/teachers',  icon: 'bi-person-video3',        label: 'Find Teachers' },
   { to: '/student/bookings',  icon: 'bi-calendar-check',       label: 'My Bookings'   },
   { to: '/student/payments',  icon: 'bi-credit-card',          label: 'Payments'      },
+  { to: '/student/inbox',     icon: 'bi-inbox',                label: 'Inbox'         },
   { to: '/student/profile',   icon: 'bi-person-circle',        label: 'Profile'       },
 ]
 
