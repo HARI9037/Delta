@@ -11,10 +11,14 @@ function ReportGradeModal({ student, onClose, onSent }) {
   const [error, setError] = useState('')
 
   async function handleSend() {
+    if (!message.trim()) {
+      setError('Please enter a message for the student.')
+      return
+    }
     setError('')
     setSending(true)
     try {
-      await notifyStudent(student._id, message.trim() || DEFAULT_MESSAGE)
+      await notifyStudent(student._id, message.trim())
       onSent()
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send notification.')
@@ -27,26 +31,24 @@ function ReportGradeModal({ student, onClose, onSent }) {
     <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content border-0" style={{ borderRadius: 12 }}>
-          <div className="modal-header bg-warning text-white" style={{ borderRadius: '12px 12px 0 0' }}>
+          <div className="modal-header bg-danger text-white" style={{ borderRadius: '12px 12px 0 0' }}>
             <h6 className="modal-title m-0"><i className="bi bi-exclamation-triangle me-2"></i>Report Missing Grade</h6>
             <button className="btn-close btn-close-white" onClick={onClose}></button>
           </div>
           <div className="modal-body p-4">
             <AlertMessage type="danger" message={error} />
-            <p className="small text-muted mb-2">
-              {student.name} does not have a class/grade set. Send a message asking them to add it.
-            </p>
-            <label className="form-label small fw-semibold">Message to student</label>
+            <label className="form-label small fw-semibold">Message to student <span className="text-danger">*</span></label>
             <textarea
               className="form-control form-control-sm"
               rows="3"
+              placeholder="Type a message asking them to add their class or grade"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             ></textarea>
           </div>
           <div className="modal-footer border-0 pb-4 pe-4">
             <button className="btn btn-outline-secondary btn-sm" onClick={onClose}>Cancel</button>
-            <button className="btn btn-warning btn-sm px-4" onClick={handleSend} disabled={sending}>
+            <button className="btn btn-warning btn-sm px-4" onClick={handleSend} disabled={sending || !message.trim()}>
               {sending ? 'Sending...' : 'Send'}
             </button>
           </div>
@@ -119,7 +121,7 @@ export default function MyStudents() {
                         {st.grade ? (
                           st.grade
                         ) : (
-                          <span className="badge bg-warning bg-opacity-10 text-warning">No Grade</span>
+                          <span className="badge bg-danger bg-opacity-10 text-danger">No Grade</span>
                         )}
                       </td>
                       <td>
@@ -129,7 +131,7 @@ export default function MyStudents() {
                       <td><span className="badge bg-success bg-opacity-10 text-success">Active</span></td>
                       <td className="text-end pe-3">
                         {!st.grade && (
-                          <button className="btn btn-outline-warning btn-sm" onClick={() => setReportStudent(st)}>
+                          <button className="btn btn-outline-danger btn-sm" onClick={() => setReportStudent(st)}>
                             <i className="bi bi-exclamation-triangle me-1"></i>Report Grade
                           </button>
                         )}
