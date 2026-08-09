@@ -15,6 +15,7 @@ import FindTeachers from './components/Student/FindTeachers'
 import MyBookings from './components/Student/MyBookings'
 import Payments from './components/Student/Payments'
 import StudentProfile from './components/Student/StudentProfile'
+import Inbox from './components/Student/Inbox'
 
 // Teacher
 import TeacherDashboard from './components/Teacher/TeacherDashboard'
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="teachers" element={<FindTeachers />} />
           <Route path="bookings" element={<MyBookings />} />
           <Route path="payments" element={<Payments />} />
+          <Route path="inbox" element={<Inbox />} />
           <Route path="profile" element={<StudentProfile />} />
         </Route>
 
