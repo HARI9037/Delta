@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getStudentDashboard } from '../../services/studentService'
+import { getStudentDashboard, getNotifications, markNotificationsRead } from '../../services/studentService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
 
@@ -8,6 +8,7 @@ export default function StudentDashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [notifications, setNotifications] = useState([])
 
   useEffect(() => {
     getStudentDashboard()
@@ -15,6 +16,21 @@ export default function StudentDashboard() {
       .catch(() => setError('Failed to load dashboard. Please refresh.'))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    getNotifications()
+      .then((res) => setNotifications(res.data?.data || []))
+      .catch(() => {})
+  }, [])
+
+  const handleMarkRead = async () => {
+    try {
+      await markNotificationsRead()
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+    } catch {
+      /* ignore */
+    }
+  }
 
   if (loading) return <Spinner />
   if (error) return <AlertMessage type="danger" message={error} />
@@ -87,10 +103,19 @@ export default function StudentDashboard() {
                 <ul className="list-group list-group-flush">
                   {todaysClasses.map((c) => (
                     <li key={c._id} className="list-group-item d-flex justify-content-between align-items-center">
-                      <div>
-                        <div className="fw-semibold small">{c.subject}</div>
-                        <div className="text-muted" style={{ fontSize: '0.78rem' }}>
-                          {c.startTime} – {c.endTime} · {c.teacherId?.fullName}
+                      <div className="d-flex align-items-center gap-2">
+                        {c.teacherId?.profilePhoto ? (
+                          <img src={c.teacherId.profilePhoto} alt={c.teacherId.fullName} className="rounded-circle object-fit-cover flex-shrink-0" style={{ width: 30, height: 30 }} />
+                        ) : (
+                          <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 30, height: 30, fontSize: '0.8rem' }}>
+                            <i className="bi bi-person-fill"></i>
+                          </div>
+                        )}
+                        <div>
+                          <div className="fw-semibold small">{c.subject}</div>
+                          <div className="text-muted" style={{ fontSize: '0.78rem' }}>
+                            {c.startTime} – {c.endTime} · {c.teacherId?.fullName}
+                          </div>
                         </div>
                       </div>
                       <span
@@ -133,6 +158,44 @@ export default function StudentDashboard() {
                         <div className="text-muted" style={{ fontSize: '0.78rem' }}>{new Date(b.date).toLocaleDateString()} · {b.startTime} – {b.endTime}</div>
                       </div>
                       <span className={`badge badge-${b.status?.toLowerCase()} px-2 py-1`}>{b.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Notifications */}
+      <div className="row g-3">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <span><i className="bi bi-bell me-2 text-primary"></i>Notifications</span>
+              {notifications.some((n) => !n.read) && (
+                <button className="btn btn-outline-primary btn-sm" style={{ fontSize: '0.75rem' }} onClick={handleMarkRead}>
+                  Mark all read
+                </button>
+              )}
+            </div>
+            <div className="card-body p-0">
+              {notifications.length === 0 ? (
+                <div className="text-center py-4 text-muted">
+                  <i className="bi bi-bell-slash fs-2 d-block mb-2"></i>
+                  No notifications
+                </div>
+              ) : (
+                <ul className="list-group list-group-flush">
+                  {notifications.map((n) => (
+                    <li key={n._id} className={`list-group-item d-flex justify-content-between align-items-center ${!n.read ? 'bg-warning bg-opacity-10' : ''}`}>
+                      <div>
+                        <div className="small">{n.message}</div>
+                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                          {n.teacherId?.fullName || 'Teacher'} · {new Date(n.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      {!n.read && <span className="badge bg-warning">New</span>}
                     </li>
                   ))}
                 </ul>

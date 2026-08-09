@@ -7,13 +7,20 @@ import AlertMessage from '../Common/AlertMessage'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const MODES = ['Online', 'Offline']
 
+function localDateStr(d = new Date()) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export default function Availability() {
   const { user } = useAuth()
   const [slots, setSlots] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [form, setForm] = useState({ subject: '', date: new Date().toISOString().split('T')[0], startTime: '09:00', endTime: '10:00', mode: 'Online', enabled: true })
+  const [form, setForm] = useState({ subject: '', date: localDateStr(), startTime: '09:00', endTime: '10:00', mode: 'Online', enabled: true })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const subjects = user?.subjects || []
@@ -92,7 +99,7 @@ export default function Availability() {
                 </div>
                 <div className="mb-3">
                   <label className="form-label small fw-semibold">Date</label>
-                  <input type="date" name="date" className="form-control form-control-sm" value={form.date} onChange={handleChange} required min={new Date().toISOString().split('T')[0]} />
+                  <input type="date" name="date" className="form-control form-control-sm" value={form.date} onChange={handleChange} required min={localDateStr()} />
                 </div>
                 <div className="row g-2 mb-3">
                   <div className="col-6">

@@ -21,7 +21,6 @@ import TeacherDashboard from './components/Teacher/TeacherDashboard'
 import Availability from './components/Teacher/Availability'
 import Timetable from './components/Teacher/Timetable'
 import MyStudents from './components/Teacher/MyStudents'
-import PaymentAdmin from './components/Teacher/PaymentAdmin'
 import TeacherProfile from './components/Teacher/TeacherProfile'
 
 export default function App() {
@@ -51,7 +50,6 @@ export default function App() {
           <Route path="availability" element={<Availability />} />
           <Route path="timetable" element={<Timetable />} />
           <Route path="students" element={<MyStudents />} />
-          <Route path="payments" element={<PaymentAdmin />} />
           <Route path="profile" element={<TeacherProfile />} />
         </Route>
 

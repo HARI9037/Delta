@@ -17,7 +17,6 @@ const titles = {
   '/teacher/timetable':  'Timetable',
   '/teacher/students':   'My Students',
   '/teacher/profile':    'My Profile',
-  '/teacher/payments':   'Payment Management',
 }
 
 export default function DashboardLayout() {
