@@ -41,6 +41,14 @@ const adminAccordionSections = [
     ],
   },
   {
+    key: 'system-announcements',
+    title: 'Announcements',
+    icon: 'bi-megaphone-fill',
+    links: [
+      { to: '/admin/announcements', icon: 'bi-broadcast', label: 'Manage Announcements' },
+    ],
+  },
+  {
     key: 'teacher-portal',
     title: 'Teacher Portal',
     icon: 'bi-person-badge',
@@ -69,6 +77,8 @@ export default function Sidebar({ isOpen, onClose }) {
       setOpenSection('user-management')
     } else if (path.startsWith('/admin/bookings') || path.startsWith('/admin/booking-confirmations') || path.startsWith('/admin/payments')) {
       setOpenSection('bookings-payments')
+    } else if (path.startsWith('/admin/announcements')) {
+      setOpenSection('system-announcements')
     } else if (path.startsWith('/teacher/availability') || path.startsWith('/teacher/timetable') || path.startsWith('/teacher/students')) {
       setOpenSection('teacher-portal')
     }
