@@ -29,9 +29,16 @@ export default function Login() {
 
       // Backend returns { token, student } or { token, teacher }
       const userObj = data.student || data.teacher || {}
-      login({ ...userObj, token: data.token, role })
+      const userRole = userObj.role || role
+      login({ ...userObj, token: data.token, role: userRole })
 
-      navigate(role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard', { replace: true })
+      if (userRole === 'admin') {
+        navigate('/admin/dashboard', { replace: true })
+      } else if (userRole === 'teacher') {
+        navigate('/teacher/dashboard', { replace: true })
+      } else {
+        navigate('/student/dashboard', { replace: true })
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid credentials. Please try again.')
     } finally {

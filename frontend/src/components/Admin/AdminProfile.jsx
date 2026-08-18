@@ -3,13 +3,10 @@ import { getTeacherProfile, updateTeacherProfile, uploadProfilePhoto } from '../
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
-
-const ALL_SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Computer Science', 'Economics']
-
 // Maximum photo size in bytes (2 MB)
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024 // 2 MB
 
-export default function TeacherProfile() {
+export default function AdminProfile() {
   const { login } = useAuth()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -18,8 +15,7 @@ export default function TeacherProfile() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const [form, setForm] = useState({ name: '', phone: '', bio: '' })
-  const [subjects, setSubjects] = useState([])
+  const [form, setForm] = useState({ name: '', phone: '' })
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -28,21 +24,15 @@ export default function TeacherProfile() {
         const data = res.data?.data || {}
         setProfile(data)
         setForm({
-          name: data.name || '',
+          name: data.name || data.fullName || '',
           phone: data.phone || '',
-          bio: data.bio || ''
         })
-        setSubjects(data.subjects || [])
       })
-      .catch(() => setError('Failed to load profile.'))
+      .catch(() => setError('Failed to load admin profile.'))
       .finally(() => setLoading(false))
   }, [])
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
-
-  const toggleSubject = (sub) => {
-    setSubjects((prev) => prev.includes(sub) ? prev.filter((s) => s !== sub) : [...prev, sub])
-  }
 
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0]
@@ -60,7 +50,7 @@ export default function TeacherProfile() {
       const updated = res.data?.data || {}
       setProfile(updated)
       const stored = JSON.parse(localStorage.getItem('tms_user') || '{}')
-      login({ ...stored, name: updated.name, profilePhoto: updated.profilePhoto })
+      login({ ...stored, name: updated.name || updated.fullName, profilePhoto: updated.profilePhoto })
       setSuccess('Profile photo updated successfully.')
     } catch (err) {
       setError(err.response?.data?.message || 'Photo upload failed. Please try again.')
@@ -79,7 +69,7 @@ export default function TeacherProfile() {
       const updated = res.data?.data || {}
       setProfile(updated)
       const stored = JSON.parse(localStorage.getItem('tms_user') || '{}')
-      login({ ...stored, name: updated.name, profilePhoto: '' })
+      login({ ...stored, name: updated.name || updated.fullName, profilePhoto: '' })
       setSuccess('Profile photo removed.')
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to remove photo.')
@@ -95,14 +85,14 @@ export default function TeacherProfile() {
     setSaving(true)
 
     try {
-      const res = await updateTeacherProfile({ ...form, subjects })
+      const res = await updateTeacherProfile({ fullName: form.name, phone: form.phone })
       const updated = res.data?.data || {}
       setProfile(updated)
 
       const stored = JSON.parse(localStorage.getItem('tms_user') || '{}')
-      login({ ...stored, name: updated.name, subjects: updated.subjects })
+      login({ ...stored, name: updated.name || updated.fullName || form.name })
 
-      setSuccess('Profile updated successfully.')
+      setSuccess('Admin profile updated successfully.')
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile.')
     } finally {
@@ -114,14 +104,14 @@ export default function TeacherProfile() {
 
   return (
     <div>
-      <p className="page-title">My Profile</p>
-      <p className="page-subtitle">Manage your personal information and teaching preferences.</p>
+      <p className="page-title">Admin Profile</p>
+      <p className="page-subtitle">Manage your administrative account information and settings.</p>
 
       <div className="row">
         <div className="col-lg-8">
           <div className="card">
             <div className="card-header bg-white pt-3 pb-2">
-              <h6 className="mb-0 fw-semibold text-primary">Profile Details</h6>
+              <h6 className="mb-0 fw-semibold text-primary">Administrator Details</h6>
             </div>
             <div className="card-body p-4">
               <AlertMessage type="danger" message={error} />
@@ -137,16 +127,18 @@ export default function TeacherProfile() {
                   />
                 ) : (
                   <div
-                    className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                    style={{ width: 80, height: 80, fontSize: '2.5rem' }}
+                    className="rounded-circle text-white d-flex align-items-center justify-content-center"
+                    style={{ width: 80, height: 80, fontSize: '2.5rem', background: '#0B174E' }}
                   >
-                    <i className="bi bi-person-video3"></i>
+                    <i className="bi bi-person-badge-fill"></i>
                   </div>
                 )}
                 <div className="flex-grow-1">
-                  <h5 className="fw-bold mb-1">{profile?.name}</h5>
+                  <h5 className="fw-bold mb-1">{profile?.name || profile?.fullName}</h5>
                   <p className="text-muted small mb-0">{profile?.email}</p>
-                  <span className="badge bg-light text-primary border mt-2">Teacher Account</span>
+                  <span className="badge mt-2" style={{ background: 'rgba(238,12,3,0.15)', color: '#ee0c03', border: '1px solid rgba(238,12,3,0.3)' }}>
+                    👑 Administrator Account
+                  </span>
                 </div>
                 <div className="d-flex flex-column gap-2">
                   <input
@@ -189,48 +181,47 @@ export default function TeacherProfile() {
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
                     <label className="form-label small fw-semibold">Full Name</label>
-                    <input type="text" name="name" className="form-control form-control-sm" value={form.name} onChange={handleChange} required />
+                    <input
+                      type="text"
+                      name="name"
+                      className="form-control form-control-sm"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label small fw-semibold">Email Address (Read-only)</label>
-                    <input type="email" className="form-control form-control-sm" value={profile?.email || ''} disabled />
+                    <input
+                      type="email"
+                      className="form-control form-control-sm"
+                      value={profile?.email || ''}
+                      disabled
+                    />
                   </div>
                 </div>
 
-                <div className="row g-3 mb-3">
+                <div className="row g-3 mb-4">
                   <div className="col-md-6">
                     <label className="form-label small fw-semibold">Phone Number</label>
-                    <input type="tel" name="phone" className="form-control form-control-sm" value={form.phone} onChange={handleChange} required />
+                    <input
+                      type="tel"
+                      name="phone"
+                      className="form-control form-control-sm"
+                      value={form.phone}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold">Teaching Subjects</label>
-                  <div className="d-flex flex-wrap gap-2">
-                    {ALL_SUBJECTS.map((sub) => (
-                      <div key={sub} className="form-check form-check-inline m-0">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id={`sub-${sub}`}
-                          checked={subjects.includes(sub)}
-                          onChange={() => toggleSubject(sub)}
-                        />
-                        <label className="form-check-label small" htmlFor={`sub-${sub}`}>{sub}</label>
-                      </div>
-                    ))}
+                  <div className="col-md-6">
+                    <label className="form-label small fw-semibold">System Role</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value="System Administrator"
+                      disabled
+                    />
                   </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label small fw-semibold">Short Bio</label>
-                  <textarea
-                    name="bio"
-                    className="form-control form-control-sm"
-                    rows={3}
-                    value={form.bio}
-                    onChange={handleChange}
-                  ></textarea>
                 </div>
 
                 <div className="d-flex justify-content-end">

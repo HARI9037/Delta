@@ -5,18 +5,26 @@ import Navbar from '../Navbar/Navbar'
 import PaymentGate from '../Payment/PaymentGate'
 import { useAuth } from '../../context/AuthContext'
 
-// Maps URL path → page title shown in the navbar
 const titles = {
-  '/student/dashboard':  'Dashboard',
-  '/student/teachers':   'Find Teachers',
-  '/student/bookings':   'My Bookings',
-  '/student/payments':   'Payments',
-  '/student/profile':    'My Profile',
-  '/teacher/dashboard':  'Dashboard',
-  '/teacher/availability': 'Availability',
-  '/teacher/timetable':  'Timetable',
-  '/teacher/students':   'My Students',
-  '/teacher/profile':    'My Profile',
+  '/student/dashboard':          'Dashboard',
+  '/student/teachers':           'Find Teachers',
+  '/student/bookings':           'My Bookings',
+  '/student/payments':           'Payments',
+  '/student/profile':            'My Profile',
+  '/teacher/dashboard':          'Dashboard',
+  '/teacher/availability':       'Availability',
+  '/teacher/timetable':          'Timetable',
+  '/teacher/students':           'My Students',
+  '/teacher/profile':            'My Profile',
+  '/admin/dashboard':            'Admin Dashboard',
+  '/admin/registrations':        'Approve Registrations',
+  '/admin/payments':             'Payment Verification',
+  '/admin/students':             'All Students',
+  '/admin/teachers':             'All Teachers',
+  '/admin/booking-confirmations':'Booking Confirmations',
+  '/admin/bookings':             'All Bookings',
+  '/admin/announcements':        'Announcements',
+  '/admin/profile':              'Admin Profile',
 }
 
 export default function DashboardLayout() {

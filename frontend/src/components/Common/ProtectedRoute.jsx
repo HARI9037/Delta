@@ -1,8 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
-// Wraps protected routes — redirects to /login if not authenticated
-// If allowedRole is given, also checks the user's role
 export default function ProtectedRoute({ children, allowedRole }) {
   const { user } = useAuth()
 
@@ -10,9 +8,17 @@ export default function ProtectedRoute({ children, allowedRole }) {
     return <Navigate to="/login" replace />
   }
 
-  if (allowedRole && user.role !== allowedRole) {
-    const redirect = user.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard'
-    return <Navigate to={redirect} replace />
+  if (allowedRole) {
+    const isTeacherRouteAllowed = allowedRole === 'teacher' && (user.role === 'teacher' || user.role === 'admin')
+    const isDirectRoleMatch = user.role === allowedRole
+
+    if (!isDirectRoleMatch && !isTeacherRouteAllowed) {
+      let redirect = '/student/dashboard'
+      if (user.role === 'admin') redirect = '/admin/dashboard'
+      else if (user.role === 'teacher') redirect = '/teacher/dashboard'
+
+      return <Navigate to={redirect} replace />
+    }
   }
 
   return children

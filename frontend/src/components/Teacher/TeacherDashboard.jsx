@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getTeacherDashboard } from '../../services/teacherService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
+import AnnouncementSection from '../Common/AnnouncementSection'
 
 export default function TeacherDashboard() {
   const [data, setData] = useState(null)
@@ -22,7 +23,6 @@ export default function TeacherDashboard() {
     fetchData()
   }, [])
 
-
   if (loading) return <Spinner />
   if (error) return <AlertMessage type="danger" message={error} />
 
@@ -35,6 +35,9 @@ export default function TeacherDashboard() {
     <div>
       <p className="page-title">Dashboard</p>
       <p className="page-subtitle">Welcome back! Here is an overview of your teaching schedule.</p>
+
+      {/* Announcements Broadcast Feed */}
+      <AnnouncementSection />
 
       {/* Stat cards */}
       <div className="row g-3 mb-4">
@@ -144,7 +147,6 @@ export default function TeacherDashboard() {
           </div>
         </div>
       </div>
-
-      </div>
+    </div>
   )
 }
