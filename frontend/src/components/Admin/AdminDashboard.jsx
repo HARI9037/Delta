@@ -247,6 +247,14 @@ export default function AdminDashboard() {
 
         {/* ── System Announcements Feed ── */}
         <div className="col-12 mt-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="fw-bold mb-0 text-dark">
+              <i className="bi bi-megaphone-fill me-2 text-warning"></i>Announcements Overview
+            </h5>
+            <Link to="/admin/announcements" className="btn btn-sm btn-primary px-3 rounded-pill fw-semibold" style={{ fontSize: '0.82rem' }}>
+              <i className="bi bi-plus-lg me-1"></i>Create / Manage Announcements
+            </Link>
+          </div>
           <AnnouncementSection />
         </div>
       </div>
