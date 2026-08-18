@@ -3,7 +3,7 @@ import { getTeacherProfile, updateTeacherProfile, uploadProfilePhoto } from '../
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
-
+// Maximum photo size in bytes (2 MB)
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024 // 2 MB
 
 export default function AdminProfile() {

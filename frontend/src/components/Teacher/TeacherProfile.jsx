@@ -5,6 +5,8 @@ import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
 
 const ALL_SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Computer Science', 'Economics']
+
+// Maximum photo size in bytes (2 MB)
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024 // 2 MB
 
 export default function TeacherProfile() {
