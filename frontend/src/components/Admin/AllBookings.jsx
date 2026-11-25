@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAllBookings } from '../../services/adminService'
+import { formatLocalDate } from '../../utils/dateUtils'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
 
@@ -121,7 +122,7 @@ export default function AllBookings() {
                           </div>
                         </td>
                         <td className="small fw-semibold">{b.subject}</td>
-                        <td className="small">{b.date}</td>
+                        <td className="small">{formatLocalDate(b.date)}</td>
                         <td className="small text-muted">{b.startTime} - {b.endTime}</td>
                         <td className="small">{b.mode}</td>
                         <td>

@@ -96,6 +96,16 @@ class AdminController {
       return responseHelper.error(res, error.statusCode || 400, error.message || 'Failed to fetch bookings', error.message);
     }
   }
+
+  async getTimetable(req, res) {
+    try {
+      const { date } = req.query;
+      const data = await adminService.getTimetableByDate(date);
+      return responseHelper.success(res, 200, 'Timetable fetched successfully', data);
+    } catch (error) {
+      return responseHelper.error(res, error.statusCode || 400, error.message || 'Failed to fetch timetable', error.message);
+    }
+  }
 }
 
 export default new AdminController();

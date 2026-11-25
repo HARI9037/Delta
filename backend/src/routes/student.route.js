@@ -29,10 +29,16 @@ router.post('/profile/photo', authenticateStudent, (req, res, next) => {
 
 router.get('/teachers', authenticateStudent, (req, res) => studentController.getAllTeachers(req, res));
 router.get('/teachers/:id', authenticateStudent, (req, res) => studentController.getTeacher(req, res));
+
+// Bookings
+router.get('/bookings', authenticateStudent, (req, res) => studentController.getBookings(req, res));
 router.post('/bookings', authenticateStudent, (req, res) => studentController.bookSlot(req, res));
+router.put('/bookings/:id/cancel', authenticateStudent, (req, res) => studentController.cancelBooking(req, res));
+router.delete('/bookings/:id', authenticateStudent, (req, res) => studentController.cancelBooking(req, res));
+
 router.get('/dashboard', authenticateStudent, (req, res) => studentController.getDashboard(req, res));
 
-// Notifications (from teachers, e.g. requests to add grade/class)
+// Notifications
 router.get('/notifications', authenticateStudent, (req, res) => studentController.getNotifications(req, res));
 router.put('/notifications/read', authenticateStudent, (req, res) => studentController.markNotificationsRead(req, res));
 

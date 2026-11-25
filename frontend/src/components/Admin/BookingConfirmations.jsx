@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getPendingBookings, confirmOrRejectBooking } from '../../services/adminService'
+import { formatLocalDate } from '../../utils/dateUtils'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
+import Avatar from '../Common/Avatar'
 
 export default function BookingConfirmations() {
   const [bookings, setBookings] = useState([])
@@ -42,8 +45,15 @@ export default function BookingConfirmations() {
 
   return (
     <div>
-      <p className="page-title">Booking Confirmations</p>
-      <p className="page-subtitle">Review and confirm pending session booking requests from students.</p>
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div>
+          <p className="page-title mb-1">Booking Confirmations</p>
+          <p className="page-subtitle mb-0">Review and confirm pending session booking requests from students.</p>
+        </div>
+        <Link to="/admin/timetable" className="btn btn-primary btn-sm px-3 rounded-pill fw-semibold">
+          <i className="bi bi-table me-1"></i>View Master Timetable
+        </Link>
+      </div>
 
       <AlertMessage type="danger" message={error} />
       <AlertMessage type="success" message={success} />
@@ -73,9 +83,7 @@ export default function BookingConfirmations() {
                 <div className="card-body p-3">
                   {/* Student Info */}
                   <div className="d-flex align-items-center gap-2 mb-3 p-2 rounded" style={{ background: '#F8FAFC' }}>
-                    <div className="rounded-circle bg-info text-dark fw-bold d-flex align-items-center justify-content-center" style={{ width: 36, height: 36, fontSize: '0.85rem' }}>
-                      {b.studentId?.name?.substring(0, 2).toUpperCase() || 'ST'}
-                    </div>
+                    <Avatar src={b.studentId?.profilePhoto} name={b.studentId?.name} size={36} />
                     <div>
                       <div className="fw-bold small">{b.studentId?.name || 'Student'}</div>
                       <div className="text-muted" style={{ fontSize: '0.72rem' }}>
@@ -86,9 +94,7 @@ export default function BookingConfirmations() {
 
                   {/* Teacher Info */}
                   <div className="d-flex align-items-center gap-2 mb-3 p-2 rounded" style={{ background: '#F8FAFC' }}>
-                    <div className="rounded-circle bg-warning text-dark fw-bold d-flex align-items-center justify-content-center" style={{ width: 36, height: 36, fontSize: '0.85rem' }}>
-                      {b.teacherId?.fullName?.substring(0, 2).toUpperCase() || 'TR'}
-                    </div>
+                    <Avatar src={b.teacherId?.profilePhoto} name={b.teacherId?.fullName} size={36} />
                     <div>
                       <div className="fw-bold small">{b.teacherId?.fullName || 'Teacher'}</div>
                       <div className="text-muted" style={{ fontSize: '0.72rem' }}>
@@ -100,7 +106,7 @@ export default function BookingConfirmations() {
                   {/* Session Timing */}
                   <div className="small text-secondary mb-2">
                     <i className="bi bi-calendar-event me-2 text-primary"></i>
-                    <strong>Date:</strong> {b.date}
+                    <strong>Date:</strong> {formatLocalDate(b.date)}
                   </div>
                   <div className="small text-secondary mb-2">
                     <i className="bi bi-clock me-2 text-primary"></i>
@@ -133,7 +139,7 @@ export default function BookingConfirmations() {
                     disabled={actingId === b._id}
                     onClick={() => handleAction(b._id, 'Approved')}
                   >
-                    Confirm Booking
+                    Approve Session
                   </button>
                 </div>
               </div>

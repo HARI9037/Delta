@@ -55,7 +55,7 @@ const teacherSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['Pending', 'Verified', 'Rejected'],
-      default: 'Verified',
+      default: 'Pending',
     },
     bio: {
       type: String,

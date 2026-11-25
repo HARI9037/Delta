@@ -2,6 +2,15 @@ import Student from '../models/student.model.js';
 import Teacher from '../models/teacher.model.js';
 import Booking from '../models/booking.model.js';
 import Payment from '../models/payment.model.js';
+import Availability, { MIN_STUDENTS_PER_SLOT } from '../models/availability.model.js';
+import Notification from '../models/notification.model.js';
+
+function localDateStr(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 class AdminService {
   /**
@@ -18,6 +27,7 @@ class AdminService {
       totalBookings,
       recentRegistrations,
       recentPayments,
+      recentBookings,
     ] = await Promise.all([
       Student.countDocuments({ active: true }),
       Teacher.countDocuments({ active: true }),
@@ -38,6 +48,14 @@ class AdminService {
         .populate('studentId', 'name email class')
         .sort({ createdAt: -1 })
         .limit(5)
+        .lean(),
+
+      // Recent pending bookings for quick review
+      Booking.find({ status: 'Pending' })
+        .populate('studentId', 'name email phone class school profilePhoto')
+        .populate('teacherId', 'fullName email phone profilePhoto')
+        .sort({ createdAt: -1 })
+        .limit(6)
         .lean(),
     ]);
 
@@ -79,6 +97,7 @@ class AdminService {
       },
       recentPendingRegistrations: formattedPendingRegs,
       recentPendingPayments: recentPayments,
+      recentPendingBookings: recentBookings,
     };
   }
 
@@ -293,21 +312,52 @@ class AdminService {
    * Confirm (Approve) or Reject (Cancel) a booking
    */
   async confirmOrRejectBooking(bookingId, status) {
-    if (!['Approved', 'Cancelled'].includes(status)) {
+    if (!['Approved', 'Cancelled', 'Rejected'].includes(status)) {
       const error = new Error('Invalid status. Must be Approved or Cancelled.');
       error.statusCode = 400;
       throw error;
     }
 
-    const booking = await Booking.findById(bookingId);
+    const finalStatus = status === 'Rejected' ? 'Cancelled' : status;
+
+    const booking = await Booking.findById(bookingId).populate('teacherId', 'fullName email');
     if (!booking) {
       const error = new Error('Booking not found');
       error.statusCode = 404;
       throw error;
     }
 
-    booking.status = status;
+    booking.status = finalStatus;
     await booking.save();
+
+    // If cancelled/rejected, re-enable availability slot if it was full
+    if (finalStatus === 'Cancelled' && booking.availabilityId) {
+      const availability = await Availability.findById(booking.availabilityId);
+      if (availability) {
+        const minStudents = availability.minStudents || MIN_STUDENTS_PER_SLOT;
+        const activeCount = await Booking.countDocuments({
+          availabilityId: booking.availabilityId,
+          status: { $in: ['Pending', 'Approved'] },
+        });
+        if (activeCount < minStudents && !availability.enabled) {
+          availability.enabled = true;
+          await availability.save();
+        }
+      }
+    }
+
+    // Send notification to the student about admin decision
+    const teacherName = booking.teacherId?.fullName || 'Teacher';
+    const message = finalStatus === 'Approved'
+      ? `Your booking for ${booking.subject} with ${teacherName} on ${booking.date} (${booking.startTime}-${booking.endTime}) has been APPROVED by the admin.`
+      : `Your booking request for ${booking.subject} with ${teacherName} on ${booking.date} (${booking.startTime}-${booking.endTime}) was REJECTED by the admin.`;
+
+    await Notification.create({
+      studentId: booking.studentId,
+      teacherId: booking.teacherId?._id || booking.teacherId,
+      message,
+    }).catch(err => console.error('Notification creation failed:', err.message));
+
     return booking;
   }
 
@@ -341,6 +391,25 @@ class AdminService {
     }
 
     return bookings;
+  }
+
+  /**
+   * Get Master Timetable for a specific date (defaults to today) across all teachers and students
+   */
+  async getTimetableByDate(date) {
+    const targetDate = date || localDateStr();
+    const bookings = await Booking.find({ date: targetDate })
+      .populate('studentId', 'name email phone class school profilePhoto')
+      .populate('teacherId', 'fullName email phone profilePhoto')
+      .populate('availabilityId', 'mode subject startTime endTime')
+      .sort({ startTime: 1, createdAt: 1 })
+      .lean();
+
+    return {
+      date: targetDate,
+      totalSessions: bookings.length,
+      bookings,
+    };
   }
 }
 

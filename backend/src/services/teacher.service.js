@@ -3,7 +3,6 @@ import Teacher from '../models/teacher.model.js';
 import Availability from '../models/availability.model.js';
 import Booking from '../models/booking.model.js';
 import Notification from '../models/notification.model.js';
-// Student model import for future query integration
 import Student from '../models/student.model.js';
 
 // Local timezone date as "YYYY-MM-DD" (matches date strings from <input type="date">)
@@ -27,6 +26,9 @@ class TeacherService {
       error.statusCode = 400;
       throw error;
     }
+
+    teacherData.status = 'Pending';
+    teacherData.role = 'teacher';
 
     const teacher = await Teacher.create(teacherData);
     const teacherObj = teacher.toObject();
@@ -125,7 +127,7 @@ class TeacherService {
     if (profilePhoto !== undefined) teacher.profilePhoto = profilePhoto;
     if (bio !== undefined) teacher.bio = bio;
     if (subjects !== undefined) teacher.subjects = subjects;
-    if (password) teacher.password = password; // Triggers pre-save password hash hook
+    if (password) teacher.password = password;
 
     await teacher.save();
 
@@ -222,13 +224,13 @@ class TeacherService {
         teacherId,
         date: todayStr,
         status: 'Approved'
-      }).populate('studentId', 'name email phone'),
+      }).populate('studentId', 'name email phone class profilePhoto'),
 
       Booking.find({
         teacherId,
         date: { $gte: tomorrowStr },
         status: 'Approved'
-      }).sort({ date: 1, startTime: 1 }).limit(5).populate('studentId', 'name email phone'),
+      }).sort({ date: 1, startTime: 1 }).limit(10).populate('studentId', 'name email phone class profilePhoto'),
 
       Availability.find({ teacherId, date: todayStr, enabled: true }).sort({ startTime: 1 }),
       
@@ -238,27 +240,24 @@ class TeacherService {
         teacherId,
         status: 'Approved',
         date: { $gte: todayStr }
-      })
+      }).populate('studentId', 'name email phone class')
     ]);
 
-    // Timetable is generated only when the availability is entirely closed
+    // Timetable generated for all availability slots from today onwards
     const allAvailability = await Availability.find({ teacherId, date: { $gte: todayStr } }).sort({ date: 1, startTime: 1 });
-    const hasOpenSlots = allAvailability.some(slot => slot.enabled !== false);
     const timetable = {};
 
-    if (!hasOpenSlots && allAvailability.length > 0) {
-      allAvailability.forEach(slot => {
-        if (!timetable[slot.date]) {
-          timetable[slot.date] = [];
-        }
-        const slotBookings = allBookings.filter(b => b.availabilityId.toString() === slot._id.toString());
-        timetable[slot.date].push({
-          ...slot.toObject(),
-          isBooked: slotBookings.length > 0,
-          bookings: slotBookings
-        });
+    allAvailability.forEach(slot => {
+      if (!timetable[slot.date]) {
+        timetable[slot.date] = [];
+      }
+      const slotBookings = allBookings.filter(b => b.availabilityId?.toString() === slot._id.toString());
+      timetable[slot.date].push({
+        ...slot.toObject(),
+        isBooked: slotBookings.length > 0,
+        bookings: slotBookings
       });
-    }
+    });
 
     return {
       todaysClasses: todaysBookings,
@@ -395,7 +394,6 @@ class TeacherService {
     return slot;
   }
 
-
   /**
    * Get all bookings for the teacher (with optional status filter)
    */
@@ -404,11 +402,11 @@ class TeacherService {
     if (status) query.status = status;
     return await Booking.find(query)
       .sort({ createdAt: -1 })
-      .populate('studentId', 'name email phone');
+      .populate('studentId', 'name email phone class profilePhoto');
   }
 
   /**
-   * Delete an availability slot
+   * Delete an availability slot and safely cancel pending/approved bookings with notifications
    */
   async deleteAvailability(teacherId, slotId) {
     const slot = await Availability.findById(slotId);
@@ -424,8 +422,25 @@ class TeacherService {
       throw error;
     }
 
+    // Automatically cancel all active bookings associated with this deleted slot
+    const activeBookings = await Booking.find({
+      availabilityId: slotId,
+      status: { $in: ['Pending', 'Approved'] },
+    });
+
+    for (const b of activeBookings) {
+      b.status = 'Cancelled';
+      await b.save();
+
+      await Notification.create({
+        studentId: b.studentId,
+        teacherId,
+        message: `Your booking for ${slot.subject} on ${slot.date} (${slot.startTime}-${slot.endTime}) was cancelled because the teacher removed this availability slot.`,
+      }).catch(err => console.error('Notification error:', err.message));
+    }
+
     await slot.deleteOne();
-    return { id: slotId };
+    return { id: slotId, cancelledBookingsCount: activeBookings.length };
   }
 }
 

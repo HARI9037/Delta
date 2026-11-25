@@ -230,7 +230,8 @@ body {
 
 /* --- Status Badges --- */
 .badge-pending   { background-color: #FEF3C7; color: #92400E; font-weight: 600; }
-.badge-confirmed { background-color: #D1FAE5; color: #065F46; font-weight: 600; }
+.badge-confirmed,
+.badge-approved  { background-color: #D1FAE5; color: #065F46; font-weight: 600; }
 .badge-cancelled { background-color: #FEE2E2; color: #991B1B; font-weight: 600; }
 .badge-completed { background-color: #D1FAE5; color: #065F46; font-weight: 600; }
 .badge-uploaded  { background-color: #DBEAFE; color: #1E40AF; font-weight: 600; }

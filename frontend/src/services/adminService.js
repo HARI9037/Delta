@@ -10,3 +10,4 @@ export const getTeacherDetails        = (id)           => api.get(`/admin/teache
 export const getPendingBookings       = ()             => api.get('/admin/bookings/pending')
 export const confirmOrRejectBooking   = (id, data)     => api.put(`/admin/bookings/${id}/status`, data)
 export const getAllBookings           = (params)       => api.get('/admin/bookings', { params })
+export const getAdminTimetable        = (params)       => api.get('/admin/timetable', { params })
