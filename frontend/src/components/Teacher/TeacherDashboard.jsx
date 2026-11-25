@@ -3,6 +3,7 @@ import { getTeacherDashboard } from '../../services/teacherService'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
 import AnnouncementSection from '../Common/AnnouncementSection'
+import { formatLocalDate } from '../../utils/dateUtils'
 
 export default function TeacherDashboard() {
   const [data, setData] = useState(null)
@@ -82,8 +83,8 @@ export default function TeacherDashboard() {
       <div className="row g-3">
         {/* Today's Classes */}
         <div className="col-lg-6">
-          <div className="card h-100">
-            <div className="card-header">
+          <div className="card h-100 shadow-sm border-0" style={{ borderRadius: 14 }}>
+            <div className="card-header bg-white py-3 border-bottom">
               <i className="bi bi-calendar-day me-2 text-primary"></i>Today's Classes
             </div>
             <div className="card-body p-0">
@@ -115,8 +116,8 @@ export default function TeacherDashboard() {
 
         {/* Upcoming Classes */}
         <div className="col-lg-6">
-          <div className="card h-100">
-            <div className="card-header">
+          <div className="card h-100 shadow-sm border-0" style={{ borderRadius: 14 }}>
+            <div className="card-header bg-white py-3 border-bottom">
               <i className="bi bi-calendar-event me-2 text-primary"></i>Upcoming Classes
             </div>
             <div className="card-body p-0">
@@ -132,7 +133,7 @@ export default function TeacherDashboard() {
                       <div>
                         <div className="fw-semibold small">{c.subject}</div>
                         <div className="text-muted" style={{ fontSize: '0.78rem' }}>
-                          {new Date(c.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · {c.startTime} – {c.endTime}
+                          {formatLocalDate(c.date)} · {c.startTime} – {c.endTime}
                         </div>
                       </div>
                       <div className="text-end">

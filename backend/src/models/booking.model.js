@@ -44,7 +44,7 @@ const bookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Approved', 'Cancelled', 'Completed'],
+      enum: ['Pending', 'Approved', 'Cancelled', 'Completed', 'Rejected'],
       default: 'Pending',
     },
     teacherId: {

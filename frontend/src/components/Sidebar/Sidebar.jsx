@@ -21,6 +21,17 @@ const teacherLinks = [
 
 const adminAccordionSections = [
   {
+    key: 'bookings-payments',
+    title: 'Bookings & Timetable',
+    icon: 'bi-calendar-check-fill',
+    links: [
+      { to: '/admin/timetable', icon: 'bi-table', label: 'Master Timetable' },
+      { to: '/admin/booking-confirmations', icon: 'bi-check2-square', label: 'Booking Requests' },
+      { to: '/admin/bookings', icon: 'bi-calendar3', label: 'All Bookings' },
+      { to: '/admin/payments', icon: 'bi-credit-card-2-front', label: 'Payment Verification' },
+    ],
+  },
+  {
     key: 'user-management',
     title: 'User Management',
     icon: 'bi-people-fill',
@@ -31,13 +42,13 @@ const adminAccordionSections = [
     ],
   },
   {
-    key: 'bookings-payments',
-    title: 'Bookings & Payments',
-    icon: 'bi-credit-card-2-front',
+    key: 'teacher-portal',
+    title: 'Admin as Teacher',
+    icon: 'bi-person-badge',
     links: [
-      { to: '/admin/bookings', icon: 'bi-calendar3', label: 'All Bookings' },
-      { to: '/admin/booking-confirmations', icon: 'bi-calendar-check-fill', label: 'Booking Confirmations' },
-      { to: '/admin/payments', icon: 'bi-credit-card-2-front', label: 'Payment Verification' },
+      { to: '/teacher/availability', icon: 'bi-calendar-week', label: 'My Availability' },
+      { to: '/teacher/timetable', icon: 'bi-calendar2-week', label: 'My Timetable' },
+      { to: '/teacher/students', icon: 'bi-people', label: 'My Assigned Students' },
     ],
   },
   {
@@ -46,16 +57,6 @@ const adminAccordionSections = [
     icon: 'bi-megaphone-fill',
     links: [
       { to: '/admin/announcements', icon: 'bi-broadcast', label: 'Manage Announcements' },
-    ],
-  },
-  {
-    key: 'teacher-portal',
-    title: 'Teacher Portal',
-    icon: 'bi-person-badge',
-    links: [
-      { to: '/teacher/availability', icon: 'bi-calendar-week', label: 'My Availability' },
-      { to: '/teacher/timetable', icon: 'bi-table', label: 'My Timetable' },
-      { to: '/teacher/students', icon: 'bi-people', label: 'Assigned Students' },
     ],
   },
 ]
@@ -68,14 +69,14 @@ export default function Sidebar({ isOpen, onClose }) {
   const isAdmin = user?.role === 'admin'
   const isTeacher = user?.role === 'teacher'
 
-  const [openSection, setOpenSection] = useState(null)
+  const [openSection, setOpenSection] = useState('bookings-payments')
 
   useEffect(() => {
     if (!isAdmin) return
     const path = location.pathname
     if (path.startsWith('/admin/registrations') || path.startsWith('/admin/students') || path.startsWith('/admin/teachers')) {
       setOpenSection('user-management')
-    } else if (path.startsWith('/admin/bookings') || path.startsWith('/admin/booking-confirmations') || path.startsWith('/admin/payments')) {
+    } else if (path.startsWith('/admin/timetable') || path.startsWith('/admin/bookings') || path.startsWith('/admin/booking-confirmations') || path.startsWith('/admin/payments')) {
       setOpenSection('bookings-payments')
     } else if (path.startsWith('/admin/announcements')) {
       setOpenSection('system-announcements')

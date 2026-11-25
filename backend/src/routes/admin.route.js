@@ -26,4 +26,7 @@ router.get('/bookings/pending', (req, res) => adminController.getPendingBookings
 router.put('/bookings/:id/status', (req, res) => adminController.confirmOrRejectBooking(req, res));
 router.get('/bookings', (req, res) => adminController.getAllBookings(req, res));
 
+// Master Timetable by date
+router.get('/timetable', (req, res) => adminController.getTimetable(req, res));
+
 export default router;

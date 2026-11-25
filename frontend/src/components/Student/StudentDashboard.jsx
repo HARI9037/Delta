@@ -5,6 +5,7 @@ import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
 import AnnouncementSection from '../Common/AnnouncementSection'
 import Avatar from '../Common/Avatar'
+import { formatLocalDate } from '../../utils/dateUtils'
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null)
@@ -78,15 +79,15 @@ export default function StudentDashboard() {
       <div className="row g-3">
         {/* Today's Classes */}
         <div className="col-lg-6">
-          <div className="card h-100">
-            <div className="card-header">
+          <div className="card h-100 shadow-sm border-0" style={{ borderRadius: 14 }}>
+            <div className="card-header bg-white py-3 border-bottom">
               <i className="bi bi-calendar-day me-2 text-primary"></i>Today's Classes
             </div>
             <div className="card-body p-0">
               {todaysClasses.length === 0 ? (
                 <div className="text-center py-4 text-muted">
                   <i className="bi bi-calendar-x fs-2 d-block mb-2"></i>
-                  No classes today
+                  No classes scheduled for today
                 </div>
               ) : (
                 <ul className="list-group list-group-flush">
@@ -121,10 +122,10 @@ export default function StudentDashboard() {
 
         {/* Recent Bookings */}
         <div className="col-lg-6">
-          <div className="card h-100">
-            <div className="card-header d-flex justify-content-between align-items-center">
+          <div className="card h-100 shadow-sm border-0" style={{ borderRadius: 14 }}>
+            <div className="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
               <span><i className="bi bi-journal-check me-2 text-primary"></i>Recent Bookings</span>
-              <Link to="/student/bookings" className="btn btn-outline-primary btn-sm" style={{ fontSize: '0.75rem' }}>View All</Link>
+              <Link to="/student/bookings" className="btn btn-outline-primary btn-sm" style={{ fontSize: '0.75rem', borderRadius: 20 }}>View All</Link>
             </div>
             <div className="card-body p-0">
               {bookings.length === 0 ? (
@@ -138,7 +139,7 @@ export default function StudentDashboard() {
                     <li key={b._id} className="list-group-item d-flex justify-content-between align-items-center">
                       <div>
                         <div className="fw-semibold small">{b.subject}</div>
-                        <div className="text-muted" style={{ fontSize: '0.78rem' }}>{new Date(b.date).toLocaleDateString()} · {b.startTime} – {b.endTime}</div>
+                        <div className="text-muted" style={{ fontSize: '0.78rem' }}>{formatLocalDate(b.date)} · {b.startTime} – {b.endTime}</div>
                       </div>
                       <span className={`badge badge-${b.status?.toLowerCase()} px-2 py-1`}>{b.status}</span>
                     </li>

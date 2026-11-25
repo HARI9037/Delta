@@ -115,6 +115,35 @@ class StudentController {
     }
   }
 
+  async getBookings(req, res) {
+    try {
+      const bookings = await studentService.getBookings(req.user._id);
+      return responseHelper.success(res, 200, 'Bookings fetched successfully', bookings);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to fetch bookings',
+        error.message
+      );
+    }
+  }
+
+  async cancelBooking(req, res) {
+    try {
+      const { id } = req.params;
+      const cancelled = await studentService.cancelBooking(req.user._id, id);
+      return responseHelper.success(res, 200, 'Booking cancelled successfully', cancelled);
+    } catch (error) {
+      return responseHelper.error(
+        res,
+        error.statusCode || 400,
+        error.message || 'Failed to cancel booking',
+        error.message
+      );
+    }
+  }
+
   async getDashboard(req, res) {
     try {
       const dashboardData = await studentService.getDashboard(req.user._id);

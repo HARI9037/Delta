@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getAllTeachers, bookSlot } from '../../services/studentService'
+import { formatLocalDate } from '../../utils/dateUtils'
 import Spinner from '../Common/Spinner'
 import AlertMessage from '../Common/AlertMessage'
 import Avatar from '../Common/Avatar'
@@ -57,7 +58,7 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
             <AlertMessage type="danger" message={error} />
 
             {slots.length === 0 ? (
-              <div className="text-center py-4 text-muted small">No available slots for this teacher.</div>
+              <div className="text-center py-4 text-muted small">No available upcoming slots for this teacher.</div>
             ) : (
               <>
                 <label className="form-label small fw-semibold">Select Time Slot</label>
@@ -75,7 +76,9 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
                       >
                         <div>
                           <div className="fw-semibold" style={{ fontSize: '0.85rem' }}>{slot.subject}</div>
-                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>{new Date(slot.date).toLocaleDateString()} · {slot.startTime} – {slot.endTime}</div>
+                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                            {formatLocalDate(slot.date)} &bull; {slot.startTime} – {slot.endTime}
+                          </div>
                           {(slot.bookedCount || 0) > 0 && (
                             <div className="text-muted" style={{ fontSize: '0.72rem' }}>
                               {slot.bookedCount}/{slot.minStudents || 4} seats filled
@@ -90,13 +93,12 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
                   ))}
                 </div>
 
-
-
                 <div className="mb-2">
-                  <label className="form-label small fw-semibold">Requirements (Optional)</label>
+                  <label className="form-label small fw-semibold">Requirements / Notes for Teacher (Optional)</label>
                   <textarea
                     className="form-control form-control-sm"
                     rows="2"
+                    placeholder="e.g. Need help with calculus homework"
                     value={reqs}
                     onChange={(e) => setReqs(e.target.value)}
                   ></textarea>
@@ -107,7 +109,7 @@ function BookingModal({ teacher, onClose, onBookSuccess }) {
           <div className="modal-footer border-0 pb-4 pe-4">
             <button className="btn btn-outline-secondary btn-sm" onClick={onClose}>Cancel</button>
             <button className="btn btn-primary btn-sm px-4" onClick={handleBook} disabled={loading || slots.length === 0}>
-              {loading ? 'Booking...' : 'Confirm'}
+              {loading ? 'Booking...' : 'Submit Booking Request'}
             </button>
           </div>
         </div>
@@ -155,13 +157,13 @@ export default function FindTeachers() {
   return (
     <div>
       <p className="page-title">Find Teachers</p>
-      <p className="page-subtitle">Search for expert tutors and book your classes.</p>
+      <p className="page-subtitle">Search for expert tutors and book your tuition sessions.</p>
 
       <AlertMessage type="danger" message={error} />
       <AlertMessage type="success" message={successMsg} />
 
       {/* Filter Bar */}
-      <div className="card mb-4">
+      <div className="card mb-4 border-0 shadow-sm" style={{ borderRadius: 14 }}>
         <div className="card-body p-3">
           <div className="row g-2">
             <div className="col-md-6">
@@ -194,12 +196,13 @@ export default function FindTeachers() {
         )}
         {filtered.map((teacher) => (
           <div className="col-md-6 col-xl-4" key={teacher._id}>
-            <div className="card h-100">
-              <div className="card-body">
+            <div className="card h-100 border-0 shadow-sm" style={{ borderRadius: 14 }}>
+              <div className="card-body p-4">
                 <div className="d-flex align-items-center gap-3 mb-3">
                   <Avatar src={teacher.profilePhoto} name={teacher.name} size={48} />
                   <div className="overflow-hidden">
                     <div className="fw-semibold text-truncate">{teacher.name}</div>
+                    <div className="text-muted small">{teacher.email}</div>
                   </div>
                 </div>
                 <div className="mb-2">
@@ -208,13 +211,13 @@ export default function FindTeachers() {
                   ))}
                 </div>
                 <p className="small text-muted mb-4 line-clamp-2" style={{ minHeight: 40 }}>
-                  {teacher.bio || 'No bio provided.'}
+                  {teacher.bio || 'Experienced tutor dedicated to student success.'}
                 </p>
                 <button
-                  className="btn btn-primary btn-sm w-100"
+                  className="btn btn-primary btn-sm w-100 rounded-pill"
                   onClick={() => setSelectedTeacher(teacher)}
                 >
-                  View Schedule & Book
+                  <i className="bi bi-calendar-plus me-1"></i>View Slots & Book
                 </button>
               </div>
             </div>
@@ -228,8 +231,8 @@ export default function FindTeachers() {
           onClose={() => setSelectedTeacher(null)}
           onBookSuccess={() => {
             setSelectedTeacher(null)
-            setSuccessMsg('Booking successful! The class is now scheduled.')
-            setTimeout(() => setSuccessMsg(''), 5000)
+            setSuccessMsg('Booking request submitted successfully! It has been sent to the admin for approval.')
+            setTimeout(() => setSuccessMsg(''), 6000)
           }}
         />
       )}

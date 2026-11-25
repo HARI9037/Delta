@@ -1,16 +1,18 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { studentLogin, teacherLogin } from '../../services/authService'
 import AlertMessage from '../Common/AlertMessage'
 
 export default function Login() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const role = searchParams.get('role') === 'teacher' ? 'teacher' : 'student'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [success] = useState(location.state?.message || '')
   const [loading, setLoading] = useState(false)
 
   const { login } = useAuth()
@@ -62,10 +64,10 @@ export default function Login() {
           >
             <i className={`bi ${isTeacher ? 'bi-person-video3' : 'bi-mortarboard-fill'}`}></i>
           </div>
-          <h5 className="fw-semibold">{isTeacher ? 'Teacher Portal' : 'Student Portal'}</h5>
+          <h5 className="fw-semibold">{isTeacher ? 'Teacher & Admin Portal' : 'Student Portal'}</h5>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', maxWidth: 280 }}>
             {isTeacher
-              ? 'Manage your schedule, students, and availability.'
+              ? 'Manage schedules, session approvals, students, and availability.'
               : 'Find tutors, book sessions, and track your learning.'}
           </p>
         </div>
@@ -88,7 +90,7 @@ export default function Login() {
               className="flex-fill text-center py-2 text-decoration-none small fw-semibold"
               style={{ background: isTeacher ? 'var(--primary)' : 'transparent', color: isTeacher ? '#fff' : '#6B7280' }}
             >
-              <i className="bi bi-person-video3 me-1"></i>Teacher
+              <i className="bi bi-person-video3 me-1"></i>Teacher / Admin
             </Link>
           </div>
 
@@ -96,6 +98,7 @@ export default function Login() {
           <p className="text-muted small mb-3">Sign in to your account</p>
 
           <AlertMessage type="danger" message={error} />
+          <AlertMessage type="success" message={success} />
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">

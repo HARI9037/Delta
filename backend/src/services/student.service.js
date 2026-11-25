@@ -34,6 +34,8 @@ class StudentService {
       delete studentData.grade;
     }
 
+    studentData.status = 'Pending';
+
     const student = await Student.create(studentData);
     const studentObj = student.toObject();
     delete studentObj.password;
@@ -104,7 +106,7 @@ class StudentService {
     const student = await Student.findById(studentId).lean();
     if (!student) {
       const error = new Error('Student profile not found');
-      error.statusCode = 444;
+      error.statusCode = 404;
       throw error;
     }
     student.grade = student.class;
@@ -129,7 +131,7 @@ class StudentService {
     if (profilePhoto !== undefined) student.profilePhoto = profilePhoto;
     if (grade !== undefined) student.class = grade;
     if (updateData.class !== undefined) student.class = updateData.class;
-    if (password) student.password = password; // Will trigger pre-save password hash hook
+    if (password) student.password = password;
 
     await student.save();
 
@@ -168,7 +170,7 @@ class StudentService {
   }
 
   /**
-   * Get all teachers with optional filters
+   * Get all teachers with current and future availability slots
    */
   async getAllTeachers(studentId, filters = {}) {
     const query = { status: 'Verified', active: true };
@@ -181,7 +183,13 @@ class StudentService {
     const teachers = await Teacher.find(query).select('-password').lean();
     
     const teacherIds = teachers.map(t => t._id);
-    const availabilities = await Availability.find({ teacherId: { $in: teacherIds }, enabled: true }).sort({ date: 1, startTime: 1 }).lean();
+    const todayStr = localDateStr();
+    // Only return upcoming slots from today onwards
+    const availabilities = await Availability.find({
+      teacherId: { $in: teacherIds },
+      enabled: true,
+      date: { $gte: todayStr }
+    }).sort({ date: 1, startTime: 1 }).lean();
 
     const availabilityIds = availabilities.map(a => a._id);
     const [slotBookings, myBookings] = await Promise.all([
@@ -224,7 +232,7 @@ class StudentService {
   }
 
   /**
-   * Get specific teacher details and their availability
+   * Get specific teacher details and their future availability
    */
   async getTeacher(teacherId) {
     const teacher = await Teacher.findById(teacherId).select('-password');
@@ -233,7 +241,13 @@ class StudentService {
       error.statusCode = 404;
       throw error;
     }
-    const availability = await Availability.find({ teacherId, enabled: true }).sort({ date: 1, startTime: 1 });
+    const todayStr = localDateStr();
+    const availability = await Availability.find({
+      teacherId,
+      enabled: true,
+      date: { $gte: todayStr }
+    }).sort({ date: 1, startTime: 1 });
+
     return { teacher, availability };
   }
 
@@ -311,12 +325,73 @@ class StudentService {
   }
 
   /**
+   * Get all bookings for the logged-in student
+   */
+  async getBookings(studentId) {
+    return await Booking.find({ studentId })
+      .populate('teacherId', 'fullName email phone profilePhoto')
+      .sort({ createdAt: -1 })
+      .lean();
+  }
+
+  /**
+   * Cancel an existing booking by student (undo / delete mistake)
+   */
+  async cancelBooking(studentId, bookingId) {
+    const booking = await Booking.findOne({ _id: bookingId, studentId });
+    if (!booking) {
+      const error = new Error('Booking not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (booking.status === 'Cancelled') {
+      const error = new Error('Booking is already cancelled');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const previousStatus = booking.status;
+    booking.status = 'Cancelled';
+    await booking.save();
+
+    // If slot was closed, re-enable it if count is now below capacity
+    if (booking.availabilityId) {
+      const availability = await Availability.findById(booking.availabilityId);
+      if (availability) {
+        const minStudents = availability.minStudents || MIN_STUDENTS_PER_SLOT;
+        const activeCount = await Booking.countDocuments({
+          availabilityId: booking.availabilityId,
+          status: { $in: ['Pending', 'Approved'] },
+        });
+        if (activeCount < minStudents && !availability.enabled) {
+          availability.enabled = true;
+          await availability.save();
+        }
+      }
+    }
+
+    // If it was already approved, notify the teacher that the student cancelled
+    if (previousStatus === 'Approved') {
+      const student = await Student.findById(studentId);
+      const studentName = student?.name || 'A student';
+      await Notification.create({
+        studentId,
+        teacherId: booking.teacherId,
+        message: `${studentName} has cancelled their booking for ${booking.subject} on ${booking.date} (${booking.startTime}-${booking.endTime}).`,
+      }).catch(err => console.error('Notification error:', err.message));
+    }
+
+    return booking;
+  }
+
+  /**
    * Get notifications for the student
    */
   async getNotifications(studentId) {
     return await Notification.find({ studentId })
       .sort({ createdAt: -1 })
-      .limit(20)
+      .limit(30)
       .populate('teacherId', 'fullName profilePhoto');
   }
 
@@ -342,7 +417,7 @@ class StudentService {
     const currentMonth = today.toLocaleString('default', { month: 'long' });
     const currentYear = today.getFullYear().toString();
 
-    const [todaysClasses, upcomingClasses, bookingHistory, currentMonthPayment] = await Promise.all([
+    const [todaysClasses, upcomingClasses, bookingHistory, currentMonthPayment, payments] = await Promise.all([
       Booking.find({
         studentId,
         date: todayStr,
@@ -353,20 +428,23 @@ class StudentService {
         studentId,
         date: { $gte: tomorrowStr },
         status: 'Approved'
-      }).sort({ date: 1, startTime: 1 }).limit(5).populate('teacherId', 'fullName email phone profilePhoto'),
+      }).sort({ date: 1, startTime: 1 }).limit(10).populate('teacherId', 'fullName email phone profilePhoto'),
 
       Booking.find({
         studentId,
-      }).sort({ createdAt: -1 }).limit(10).populate('teacherId', 'fullName profilePhoto'),
+      }).sort({ createdAt: -1 }).limit(15).populate('teacherId', 'fullName profilePhoto'),
 
-      Payment.findOne({ studentId, month: currentMonth, year: currentYear })
+      Payment.findOne({ studentId, month: currentMonth, year: currentYear }),
+
+      Payment.find({ studentId }).sort({ createdAt: -1 }).lean()
     ]);
 
     return {
       todaysClasses,
       upcomingClasses,
       bookingHistory,
-      currentMonthPayment
+      currentMonthPayment,
+      payments
     };
   }
 }

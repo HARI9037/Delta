@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
 import { studentRegister, teacherRegister } from '../../services/authService'
 import AlertMessage from '../Common/AlertMessage'
 
@@ -15,7 +14,6 @@ export default function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const { login } = useAuth()
   const navigate = useNavigate()
   const isTeacher = role === 'teacher'
 
@@ -47,12 +45,15 @@ export default function Register() {
       }
 
       const fn = isTeacher ? teacherRegister : studentRegister
-      const res = await fn(payload)
-      const data = res.data?.data || {}
-
-      const userObj = data.student || data.teacher || {}
-      login({ ...userObj, token: data.token, role })
-      navigate(isTeacher ? '/teacher/dashboard' : '/student/dashboard', { replace: true })
+      await fn(payload)
+      setLoading(false)
+      setError('')
+      navigate(`/login?role=${role}`, {
+        replace: true,
+        state: {
+          message: 'Registration submitted successfully. Wait for admin approval before signing in.',
+        },
+      })
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.')
     } finally {

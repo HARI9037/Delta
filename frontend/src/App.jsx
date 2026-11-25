@@ -32,6 +32,7 @@ import AllStudents from './components/Admin/AllStudents'
 import AllTeachers from './components/Admin/AllTeachers'
 import BookingConfirmations from './components/Admin/BookingConfirmations'
 import AllBookings from './components/Admin/AllBookings'
+import AdminTimetable from './components/Admin/AdminTimetable'
 import ManageAnnouncements from './components/Admin/ManageAnnouncements'
 import AdminProfile from './components/Admin/AdminProfile'
 
@@ -70,12 +71,13 @@ export default function App() {
         <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="timetable" element={<AdminTimetable />} />
+          <Route path="booking-confirmations" element={<BookingConfirmations />} />
+          <Route path="bookings" element={<AllBookings />} />
           <Route path="registrations" element={<ApproveRegistrations />} />
           <Route path="payments" element={<PaymentVerification />} />
           <Route path="students" element={<AllStudents />} />
           <Route path="teachers" element={<AllTeachers />} />
-          <Route path="booking-confirmations" element={<BookingConfirmations />} />
-          <Route path="bookings" element={<AllBookings />} />
           <Route path="announcements" element={<ManageAnnouncements />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
